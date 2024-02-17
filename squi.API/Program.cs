@@ -5,20 +5,9 @@ using Squi.Connectors;
 var connectionString = args[0];
 
 var sqliteProvider = new SQLiteProvider(connectionString);
-var tables = sqliteProvider.GetTables();
-foreach (var table in tables)
-{
-    var schema = sqliteProvider.GetSchema(table);
-    foreach (var column in schema.Columns)
-    {
-        Console.WriteLine(
-            $"{column.Name}: {column.Type} {column.IsNullable} {column.IsPrimaryKey} {column.IsAutoIncrement} {column.IsUnique} {column.HasDefault} {column.Default}"
-        );
-    }
-    Console.WriteLine("------");
-}
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Services.AddCors();
 var app = builder.Build();
 
 app.MapGet("/", () => "Hello World!");
@@ -27,7 +16,7 @@ app.MapGet(
     "/tables",
     () =>
     {
-        return tables;
+        return sqliteProvider.GetTables();
     }
 );
 
@@ -45,17 +34,28 @@ app.MapGet(
     (string tableName) =>
     {
         var data = sqliteProvider.GetData(tableName);
-        var aux = data.Rows
-            .OfType<DataRow>()
+        var aux = data.AsEnumerable()
             .Select(
-                x =>
-                    data.Columns
-                        .OfType<DataColumn>()
-                        .ToDictionary(column => column.ColumnName, column => x[column.ColumnName])
-            );
+                row =>
+                    row.Table
+                        .Columns
+                        .Cast<DataColumn>()
+                        .ToDictionary(
+                            col => col.ColumnName,
+                            col => row[col] is DBNull ? null : row[col]
+                        )
+            )
+            .ToArray();
 
         return JsonSerializer.Serialize(aux);
     }
 );
+
+app.UseCors(options =>
+{
+    options.AllowAnyOrigin();
+    options.AllowAnyHeader();
+    options.AllowAnyMethod();
+});
 
 app.Run();
