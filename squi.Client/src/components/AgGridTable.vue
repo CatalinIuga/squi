@@ -11,6 +11,9 @@ const table = "Customers";
 
 const gridOptions: GridOptions = {
   rowSelection: "multiple",
+  headerHeight: 32,
+  // rowClass: "divide-x-2 divide-black ",
+  rowHeight: 32,
   unSortIcon: true,
   suppressRowClickSelection: true,
 };
@@ -25,6 +28,8 @@ onMounted(async () => {
       return {
         field: column.name.toString(),
         editable: true,
+        headerClass: "font-bold text-[#64748b]",
+        cellClass: "",
         suppressMovable: true,
       };
     });
@@ -33,10 +38,10 @@ onMounted(async () => {
   aux.unshift({
     sortable: false,
     filter: false,
-    width: 50,
+    width: 20,
     resizable: false,
+    suppressAutoSize: true,
     checkboxSelection: true,
-    editable: true,
     headerCheckboxSelection: true,
     headerCheckboxSelectionFilteredOnly: true,
   });
@@ -75,7 +80,7 @@ onMounted(async () => {
   --secondary: 240 4.8% 95.9%;
   --secondary-foreground: 240 5.9% 10%;
 
-  --muted: 240 4.8% 95.9%;
+  --muted: 210 40% 96%;
   --muted-foreground: 240 3.8% 46.1%;
 
   --accent: 240 4.8% 95.9%;
@@ -84,7 +89,7 @@ onMounted(async () => {
   --destructive: 0 84.2% 60.2%;
   --destructive-foreground: 0 0% 98%;
 
-  --border: 240 5.9% 90%;
+  --border: #e5e5e5;
   --input: 240 5.9% 90%;
   --ring: 240 5.9% 10%;
   --radius: 0.5rem;
@@ -94,7 +99,7 @@ onMounted(async () => {
   --ag-foreground-color: hsl(var(--foreground));
   --ag-background-color: hsl(var(--background));
   --ag-secondary-foreground-color: hsl(var(--secondary-foreground));
-  --ag-header-foreground-color: #64748b;
+  --ag-header-foreground-color: hsl(var(--foreground));
   --ag-tooltip-background-color: hsl(var(--popover));
   --ag-disabled-foreground-color: hsl(var(--muted-foreground));
   --ag-subheader-background-color: hsl(var(--secondary));
@@ -102,24 +107,30 @@ onMounted(async () => {
   --ag-control-panel-background-color: hsl(var(--secondary));
   --ag-side-button-selected-background-color: hsl(var(--secondary));
   --ag-header-column-resize-handle-display: none;
-  --ag-selected-row-background-color: hsl(var(--secondary));
+  --ag-selected-row-background-color: hsl(var(--muted));
   --ag-modal-overlay-background-color: hsl(var(--popover));
-  --ag-row-hover-color: hsl(var(--secondary));
-  --ag-column-hover-color: hsl(var(--secondary));
-  --ag-border-size: 1px;
-  /* --ag-grid-size: 4px; */
+  --ag-row-hover-color: hsl(var(--muted));
+  --ag-grid-size: 4px;
   --ag-row-height: 32px;
-  /* --ag-list-item-height: 20px; */
-  --ag-font-size: 14px;
+  --ag-list-item-height: 20px;
+  --ag-font-size: 12px;
+
+  --ag-borders: none;
+  --ag-border-color: var(--border);
+  --ag-borders-critical: solid 1px;
+  --ag-borders-secondary: solid 1px;
+  --ag-row-border-style: solid;
+  --ag-row-border-color: var(--border);
+  --ag-row-border-width: 1px;
+  --ag-borders-input: none;
+  --ag-cell-horizontal-border: solid var(--border);
+  --ag-header-column-separator-display: block;
+
+  --ag-borders-input: dotted 2px;
+  --ag-input-border-color: orange;
 
   @apply h-full w-full font-menlo;
 }
 
-input[type="checkbox"] {
-  @apply !rounded-none;
-}
-
-.ag-theme-quartz .ag-header-cell-label {
-  @apply font-extrabold;
-}
+/* fix input outline */
 </style>
