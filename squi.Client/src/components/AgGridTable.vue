@@ -104,17 +104,11 @@ const discardedChanges = ref<
 >([]);
 
 const discardChanges = () => {
-  console.log("called");
-  console.log(discardedChanges.value);
   discardedChanges.value.forEach((change) => {
-    gridApi.value?.applyTransaction({
-      update: [
-        {
-          rowIndex: change.row,
-          data: { [change.col]: change.oldValue },
-        },
-      ],
-    });
+    const rowNode = gridApi.value?.getDisplayedRowAtIndex(change.row);
+    if (rowNode) rowNode?.setDataValue(change.col, change.oldValue);
+    // TODO use a toast!
+    else console.log("row not found");
   });
 };
 
