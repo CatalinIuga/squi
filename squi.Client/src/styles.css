@@ -79,3 +79,79 @@
     @apply h-screen w-screen;
   }
 }
+
+.ag-theme-quartz {
+  --background: 0 0% 100%;
+  --foreground: 240 10% 3.9%;
+
+  --card: 0 0% 100%;
+  --card-foreground: 240 10% 3.9%;
+
+  --popover: 0 0% 100%;
+  --popover-foreground: 240 10% 3.9%;
+
+  --primary: 240 5.9% 10%;
+  --primary-foreground: 0 0% 98%;
+
+  --secondary: 240 4.8% 95.9%;
+  --secondary-foreground: 240 5.9% 10%;
+
+  --muted: 210 40% 96%;
+  --muted-foreground: 240 3.8% 46.1%;
+
+  --accent: 240 4.8% 95.9%;
+  --accent-foreground: 240 5.9% 10%;
+
+  --destructive: 0 84.2% 60.2%;
+  --destructive-foreground: 0 0% 98%;
+
+  --border: #e5e5e5;
+  --input: 240 5.9% 90%;
+  --ring: 240 5.9% 10%;
+  --radius: 0.5rem;
+
+  --ag-active-color: hsl(var(--accent-foreground));
+  --ag-data-color: hsl(var(--foreground));
+  --ag-foreground-color: hsl(var(--foreground));
+  --ag-background-color: hsl(var(--background));
+  --ag-secondary-foreground-color: hsl(var(--secondary-foreground));
+  --ag-header-foreground-color: hsl(var(--foreground));
+  --ag-tooltip-background-color: hsl(var(--popover));
+  --ag-disabled-foreground-color: hsl(var(--muted-foreground));
+  --ag-subheader-background-color: hsl(var(--secondary));
+  --ag-subheader-toolbar-background-color: hsl(var(--secondary));
+  --ag-control-panel-background-color: hsl(var(--secondary));
+  --ag-side-button-selected-background-color: hsl(var(--secondary));
+  --ag-header-column-resize-handle-display: none;
+  --ag-selected-row-background-color: hsl(var(--muted));
+  --ag-modal-overlay-background-color: hsl(var(--popover));
+  --ag-row-hover-color: hsl(var(--muted));
+  --ag-grid-size: 3px;
+  --ag-row-height: 32px;
+  --ag-list-item-height: 20px;
+  --ag-font-size: 12px;
+
+  --ag-borders: none;
+  --ag-border-color: var(--border);
+  --ag-borders-critical: solid 1px;
+  --ag-borders-secondary: solid 1px;
+  --ag-row-border-style: solid;
+  --ag-row-border-color: var(--border);
+  --ag-row-border-width: 1px;
+  --ag-borders-input: none;
+  --ag-cell-horizontal-border: solid var(--border);
+  --ag-header-column-separator-display: block;
+  --ag-input-focus-box-shadow: none;
+  @apply h-full w-full font-menlo;
+}
+.ag-theme-quartz .ag-layout-normal {
+  @apply h-full w-full overflow-auto;
+}
+
+.ag-theme-quartz .ag-cell-focus {
+  @apply !border-2 !border-[#66afe9] !py-0 !px-1;
+}
+
+.ag-theme-quartz .ag-header-cell-label{
+  @apply justify-between ;
+}

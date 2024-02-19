@@ -168,7 +168,7 @@ const openTables = ref<Array<string>>([]);
         </Button>
       </section>
       <!-- Table -->
-      <output class="flex-1">
+      <output class="flex-grow overflow-auto pb-12">
         <AgGridTable />
       </output>
     </article>
