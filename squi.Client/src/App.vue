@@ -25,6 +25,13 @@ import AgGridTable from "./components/AgGridTable.vue";
 const currentTable = ref<string>("");
 // const tables = ref<Array<string>>([]);
 const openTables = ref<Array<string>>([]);
+
+// Table reference for calling exposed methods
+const tableRef = ref<InstanceType<typeof AgGridTable> | null>(null);
+
+const discard = () => {
+  tableRef.value?.discardChanges();
+};
 </script>
 
 <template>
@@ -103,6 +110,27 @@ const openTables = ref<Array<string>>([]);
         <Button class="flex text-sm" variant="default" size="sm">
           Add record
         </Button>
+        <!-- Save Changes -->
+        <Button
+          class="flex text-sm bg-green-600 hover:bg-green-600/80"
+          variant="default"
+          size="sm"
+        >
+          Save {{ 1 }} changes
+        </Button>
+        <!-- Discard Changes -->
+        <Button
+          @click="discard"
+          class="flex text-sm underline"
+          variant="ghost"
+          size="sm"
+        >
+          Discard changes
+        </Button>
+        <!-- Delete records -->
+        <Button class="flex text-sm" variant="destructive" size="sm">
+          Delete {{ 3 }} records
+        </Button>
 
         <div class="ml-auto flex items-center gap-2">
           <!-- No. of rows -->
@@ -168,8 +196,8 @@ const openTables = ref<Array<string>>([]);
         </Button>
       </section>
       <!-- Table -->
-      <output class="flex-grow overflow-auto pb-12">
-        <AgGridTable />
+      <output class="h-full overflow-auto pb-12">
+        <AgGridTable ref="tableRef" />
       </output>
     </article>
   </main>

@@ -12,8 +12,12 @@ import "ag-grid-community/styles/ag-theme-quartz.css";
 import { AgGridVue } from "ag-grid-vue3";
 import { onMounted, ref } from "vue";
 
+// TABLE DATA
 const table = "Customers";
+const columnDefs = ref<ColDef[]>([]);
+const rowData = ref<Record<string, any>>([]);
 
+// AG-GRID CONFIG/API
 const gridApi = ref<GridApi | null>();
 const gridOptions: GridOptions = {
   rowSelection: "multiple",
@@ -22,6 +26,12 @@ const gridOptions: GridOptions = {
   alwaysShowVerticalScroll: true,
   onCellValueChanged: (params) => {
     console.log(params.oldValue, params.newValue);
+    discardedChanges.value.push({
+      row: params.rowIndex!,
+      col: params.column.getId(),
+      oldValue: params.oldValue,
+      newValue: params.newValue,
+    });
   },
   animateRows: false,
   rowHeight: 32,
@@ -29,27 +39,25 @@ const gridOptions: GridOptions = {
   suppressRowClickSelection: true,
 };
 
-const columnDefs = ref<ColDef[]>([]);
-const rowData = ref<Record<string, any>>([]);
-
 onMounted(async () => {
-  let aux = [] as ColDef[];
+  let aux: ColDef[] = [];
 
   await getTableSchema(table).then((data: TableSchema) => {
     aux = data.columns.map((column) => {
       return {
         field: column.name.toString(),
         editable: true,
-        headerClass: "font-bold text-[#64748b]",
+        headerClass: "font-bold text-[#64748b] ",
         cellStyle: (params) => {
           const fieldName = params.colDef.field;
           const initialValue = params.data["__initial_" + fieldName];
 
           if (params.value !== initialValue) {
-            return { backgroundColor: "#fff3cd" };
+            return { backgroundColor: "#FDE68A", color: "#92400E" };
           }
-          return { backgroundColor: "transparent" };
+          return { backgroundColor: "transparent", color: "inherit" };
         },
+
         cellClass: "py-[1px]",
         suppressMovable: true,
       };
@@ -85,6 +93,32 @@ onMounted(async () => {
 const onGridReady = (params: GridReadyEvent) => {
   gridApi.value = params.api;
 };
+
+const discardedChanges = ref<
+  {
+    row: number;
+    col: string;
+    oldValue: any;
+    newValue: any;
+  }[]
+>([]);
+
+const discardChanges = () => {
+  console.log("called");
+  console.log(discardedChanges.value);
+  discardedChanges.value.forEach((change) => {
+    gridApi.value?.applyTransaction({
+      update: [
+        {
+          rowIndex: change.row,
+          data: { [change.col]: change.oldValue },
+        },
+      ],
+    });
+  });
+};
+
+defineExpose({ discardChanges });
 </script>
 
 <template>

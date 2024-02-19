@@ -152,6 +152,18 @@
   @apply !border-2 !border-[#66afe9] !py-0 !px-1;
 }
 
-.ag-theme-quartz .ag-header-cell-label{
-  @apply justify-between ;
+.ag-theme-quartz .ag-cell-inline-editing {
+  @apply !border-2 !border-[#66afe9]  !py-0 !px-0 rounded-none;
+}
+/* change the cell inline editing border to red when the input is invalid */
+.ag-theme-quartz .ag-cell-inline-editing:has(input:invalid) {
+  @apply !border-red-500;
+}
+
+.ag-theme-quartz .ag-cell-inline-editing input {
+  @apply !border-none !bg-transparent !text-foreground !w-full !h-full !px-1;
+}
+
+.ag-theme-quartz .ag-header-cell-label {
+  @apply justify-between;
 }
