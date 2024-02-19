@@ -20,6 +20,9 @@ const gridOptions: GridOptions = {
   headerHeight: 32,
   alwaysShowHorizontalScroll: true,
   alwaysShowVerticalScroll: true,
+  onCellValueChanged: (params) => {
+    console.log(params.oldValue, params.newValue);
+  },
   animateRows: false,
   rowHeight: 32,
   unSortIcon: true,
@@ -31,12 +34,22 @@ const rowData = ref<Record<string, any>>([]);
 
 onMounted(async () => {
   let aux = [] as ColDef[];
+
   await getTableSchema(table).then((data: TableSchema) => {
     aux = data.columns.map((column) => {
       return {
         field: column.name.toString(),
         editable: true,
         headerClass: "font-bold text-[#64748b]",
+        cellStyle: (params) => {
+          const fieldName = params.colDef.field;
+          const initialValue = params.data["__initial_" + fieldName];
+
+          if (params.value !== initialValue) {
+            return { backgroundColor: "#fff3cd" };
+          }
+          return { backgroundColor: "transparent" };
+        },
         cellClass: "py-[1px]",
         suppressMovable: true,
       };
@@ -59,7 +72,13 @@ onMounted(async () => {
   columnDefs.value = aux;
 
   await getTableData(table).then((data) => {
-    rowData.value = data;
+    rowData.value = data.map((row: any) => {
+      const newRow = { ...row };
+      Object.keys(newRow).forEach((key) => {
+        newRow["__initial_" + key] = row[key];
+      });
+      return newRow;
+    });
   });
 });
 
