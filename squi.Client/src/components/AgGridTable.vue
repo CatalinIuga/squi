@@ -25,13 +25,28 @@ const gridOptions: GridOptions = {
   alwaysShowHorizontalScroll: true,
   alwaysShowVerticalScroll: true,
   onCellValueChanged: (params) => {
-    console.log(params.oldValue, params.newValue);
-    discardedChanges.value.push({
-      row: params.rowIndex!,
-      col: params.column.getId(),
-      oldValue: params.oldValue,
-      newValue: params.newValue,
-    });
+    // check if the value has changed from the initial value or by the discardChanges method
+    if (
+      params.oldValue !== params.newValue &&
+      discardedChanges.value.findIndex(
+        (change) =>
+          change.row === params.rowIndex! &&
+          change.col === params.column.getId()
+      ) === -1
+    ) {
+      discardedChanges.value.push({
+        row: params.rowIndex!,
+        col: params.column.getId(),
+        oldValue: params.oldValue,
+        newValue: params.newValue,
+      });
+    } else {
+      discardedChanges.value = discardedChanges.value.filter(
+        (change) =>
+          change.row !== params.rowIndex! ||
+          change.col !== params.column.getId()
+      );
+    }
   },
   animateRows: false,
   rowHeight: 32,
@@ -112,7 +127,7 @@ const discardChanges = () => {
   });
 };
 
-defineExpose({ discardChanges });
+defineExpose({ discardChanges, discardedChanges });
 </script>
 
 <template>

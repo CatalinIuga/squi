@@ -121,11 +121,17 @@ const discard = () => {
         <!-- Discard Changes -->
         <Button
           @click="discard"
+          v-if="tableRef?.discardedChanges.length! > 0"
           class="flex text-sm underline"
           variant="ghost"
           size="sm"
         >
-          Discard changes
+          Discard
+          {{
+            tableRef?.discardedChanges.length +
+            " " +
+            (tableRef?.discardedChanges.length! > 1 ? "changes" : "change")
+          }}
         </Button>
         <!-- Delete records -->
         <Button class="flex text-sm" variant="destructive" size="sm">
