@@ -24,26 +24,30 @@ const gridOptions: GridOptions = {
   headerHeight: 32,
   alwaysShowHorizontalScroll: true,
   alwaysShowVerticalScroll: true,
+  onSelectionChanged: () => {
+    selectedRowsCount.value = gridApi.value?.getSelectedNodes().length || 0;
+  },
   onCellValueChanged: (params) => {
     // check if the value has changed from the initial value or by the discardChanges method
+    if (!params.node.id) return;
     if (
       params.oldValue !== params.newValue &&
-      discardedChanges.value.findIndex(
+      changes.value.findIndex(
         (change) =>
-          change.row === params.rowIndex! &&
+          change.nodeId === params.node.id &&
           change.col === params.column.getId()
       ) === -1
     ) {
-      discardedChanges.value.push({
-        row: params.rowIndex!,
+      changes.value.push({
+        nodeId: params.node.id,
         col: params.column.getId(),
         oldValue: params.oldValue,
         newValue: params.newValue,
       });
     } else {
-      discardedChanges.value = discardedChanges.value.filter(
+      changes.value = changes.value.filter(
         (change) =>
-          change.row !== params.rowIndex! ||
+          change.nodeId !== params.node.id ||
           change.col !== params.column.getId()
       );
     }
@@ -109,25 +113,77 @@ const onGridReady = (params: GridReadyEvent) => {
   gridApi.value = params.api;
 };
 
-const discardedChanges = ref<
+const addRow = () => {
+  // missing intials tho
+  gridApi.value?.applyTransaction({
+    add: [
+      Object.fromEntries(columnDefs.value.map((col) => [col.field, "default"])),
+    ],
+    addIndex: 0,
+  });
+};
+
+const changes = ref<
   {
-    row: number;
+    nodeId: string;
     col: string;
     oldValue: any;
     newValue: any;
   }[]
 >([]);
 
+const saveChanges = () => {
+  changes.value.forEach((change) => {
+    const rowNode = gridApi.value?.getRowNode(change.nodeId);
+    console.log(rowNode?.data);
+
+    if (rowNode) {
+      rowNode.setData({
+        ...rowNode.data,
+        [change.col]: change.newValue,
+        ["__initial_" + change.col]: change.newValue,
+      });
+      // should probably use a toast here as well
+    }
+
+    // TODO send the changes to the server
+
+    // TODO use a toast!
+    else console.log("row not found");
+  });
+
+  changes.value = [];
+};
+
 const discardChanges = () => {
-  discardedChanges.value.forEach((change) => {
-    const rowNode = gridApi.value?.getDisplayedRowAtIndex(change.row);
-    if (rowNode) rowNode?.setDataValue(change.col, change.oldValue);
+  changes.value.forEach((change) => {
+    const rowNode = gridApi.value?.getRowNode(change.nodeId);
+    if (rowNode) rowNode.setDataValue(change.col, change.oldValue);
     // TODO use a toast!
     else console.log("row not found");
   });
 };
 
-defineExpose({ discardChanges, discardedChanges });
+const selectedRowsCount = ref(0);
+
+const deleteSelectedRows = () => {
+  const selectedRows = gridApi.value?.getSelectedRows();
+  if (selectedRows) {
+    gridApi.value?.applyTransaction({ remove: selectedRows });
+  }
+  // TODO use a unique id for each row and check the changes array for any changes to the deleted rows
+
+  selectedRowsCount.value = 0;
+};
+
+defineExpose({
+  addRow,
+  saveChanges,
+  discardChanges,
+  deleteSelectedRows,
+  changes,
+  selectedRowsCount,
+});
 </script>
 
 <template>

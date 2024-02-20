@@ -9,7 +9,6 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@tanstack/vue-table": "^8.11.7",
     "@vueuse/core": "^10.7.2",
     "ag-grid-community": "^31.0.3",
     "ag-grid-vue3": "^31.0.3",

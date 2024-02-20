@@ -28,10 +28,6 @@ const openTables = ref<Array<string>>([]);
 
 // Table reference for calling exposed methods
 const tableRef = ref<InstanceType<typeof AgGridTable> | null>(null);
-
-const discard = () => {
-  tableRef.value?.discardChanges();
-};
 </script>
 
 <template>
@@ -87,7 +83,10 @@ const discard = () => {
 
     <article class="h-full flex flex-col w-full">
       <!-- Table options -->
-      <section class="flex h-14 items-center gap-2 px-4 py-3 border-b-[1px]">
+      <section
+        v-if="tableRef"
+        class="flex h-14 items-center gap-2 px-4 py-3 border-b-[1px]"
+      >
         <!-- Filters -->
         <Button
           class="flex items-center text-sm gap-2"
@@ -107,35 +106,48 @@ const discard = () => {
           Columns
         </Button>
         <!-- Add new -->
-        <Button class="flex text-sm" variant="default" size="sm">
+        <Button
+          @click="tableRef.addRow"
+          class="flex text-sm"
+          variant="default"
+          size="sm"
+        >
           Add record
         </Button>
         <!-- Save Changes -->
         <Button
           class="flex text-sm bg-green-600 hover:bg-green-600/80"
+          v-if="tableRef.changes.length! > 0"
+          @click="tableRef.saveChanges"
           variant="default"
           size="sm"
         >
-          Save {{ 1 }} changes
+          Save
+          {{
+            tableRef.changes.length +
+            " " +
+            (tableRef.changes.length! > 1 ? "changes" : "change")
+          }}
         </Button>
         <!-- Discard Changes -->
         <Button
-          @click="discard"
-          v-if="tableRef?.discardedChanges.length! > 0"
+          v-if="tableRef.changes.length! > 0"
+          @click="tableRef.discardChanges"
           class="flex text-sm underline"
           variant="ghost"
           size="sm"
         >
-          Discard
-          {{
-            tableRef?.discardedChanges.length +
-            " " +
-            (tableRef?.discardedChanges.length! > 1 ? "changes" : "change")
-          }}
+          Discard changes
         </Button>
         <!-- Delete records -->
-        <Button class="flex text-sm" variant="destructive" size="sm">
-          Delete {{ 3 }} records
+        <Button
+          v-if="tableRef.selectedRowsCount > 0"
+          @click="tableRef.deleteSelectedRows"
+          class="flex text-sm"
+          variant="destructive"
+          size="sm"
+        >
+          Delete {{ tableRef.selectedRowsCount }} records
         </Button>
 
         <div class="ml-auto flex items-center gap-2">
