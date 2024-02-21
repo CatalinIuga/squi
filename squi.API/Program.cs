@@ -12,6 +12,9 @@ var app = builder.Build();
 
 app.MapGet("/", () => "Hello World!");
 
+/// <summary>
+/// Gets the tables in the database.
+/// </summary>
 app.MapGet(
     "/tables",
     () =>
@@ -19,6 +22,10 @@ app.MapGet(
         return sqliteProvider.GetTables();
     }
 );
+
+/// <summary>
+/// Gets the schema of a table.
+/// </summary>
 
 app.MapGet(
     "/tables/{tableName}",
@@ -29,6 +36,9 @@ app.MapGet(
     }
 );
 
+/// <summary>
+/// Gets the data from a table.
+/// </summary>
 app.MapGet(
     "/tables/{tableName}/data",
     (string tableName) =>

@@ -5,13 +5,26 @@ using Squi.Models;
 
 namespace Squi.Connectors;
 
+/// <summary>
+/// This class is used to connect to a SQLite database.
+/// </summary>
 public class SQLiteProvider
 {
+    /// <summary>
+    /// The connection to the database.
+    /// </summary>
     private readonly DbConnection connection = SQLiteFactory.Instance.CreateConnection();
+
+    /// <summary>
+    /// The tables that should not be displayed.
+    /// </summary>
     public List<string> PrivateTables { get; } =
         new List<string> { "sqlite_sequence", "sqlite_stat1", };
 
-    public SQLiteProvider(string path = "sample.db")
+    /// <summary>
+    /// Initializes a new instance of the <see cref="SQLiteProvider"/> class.
+    /// </summary>
+    public SQLiteProvider(string path)
     {
         if (!File.Exists(path))
         {
@@ -21,6 +34,10 @@ public class SQLiteProvider
         connection.ConnectionString = $"Data Source={path}";
     }
 
+    /// <summary>
+    /// Gets the schema of a table.
+    /// </summary>
+    /// <param name="tableName">The name of the table.</param>
     public TableSchema GetSchema(string tableName)
     {
         connection.Open();
@@ -30,6 +47,10 @@ public class SQLiteProvider
         return new TableSchema(schema);
     }
 
+    /// <summary>
+    /// Gets the data from a table.
+    /// </summary>
+    /// <param name="tableName">The name of the table.</param>
     public DataTable GetData(string tableName)
     {
         connection.Open();
@@ -43,6 +64,9 @@ public class SQLiteProvider
         return table;
     }
 
+    /// <summary>
+    /// Gets the names of the tables in the database.
+    /// </summary>
     public string[] GetTables()
     {
         if (connection is null)
@@ -57,7 +81,7 @@ public class SQLiteProvider
         return schema
             .Rows
             .Cast<DataRow>()
-            .Select(x => x["TABLE_NAME"].ToString()!)
+            .Select(x => x["TABLE_NAME"].ToString() ?? string.Empty)
             .Where(x => !PrivateTables.Contains(x))
             .ToArray();
     }
