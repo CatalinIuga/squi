@@ -15,6 +15,10 @@ public class SQLiteProvider
     /// </summary>
     private readonly DbConnection connection = SQLiteFactory.Instance.CreateConnection();
 
+    private readonly DbDataAdapter adapter = SQLiteFactory.Instance.CreateDataAdapter();
+
+    private readonly DbCommandBuilder builder = SQLiteFactory.Instance.CreateCommandBuilder();
+
     /// <summary>
     /// The tables that should not be displayed.
     /// </summary>

@@ -1,6 +1,14 @@
 <script setup lang="ts">
 import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Tooltip,
   TooltipContent,
@@ -10,7 +18,6 @@ import {
 import {
   ChevronLeftIcon,
   ChevronRightIcon,
-  CodeIcon,
   DownloadIcon,
   ListFilter,
   PlusIcon,
@@ -19,15 +26,60 @@ import {
   SlidersHorizontal,
   XIcon,
 } from "lucide-vue-next";
-import { ref } from "vue";
-import AgGridTable from "./components/AgGridTable.vue";
 
-const currentTable = ref<string>("");
-// const tables = ref<Array<string>>([]);
+import { onMounted, ref, watch } from "vue";
+import AgGridTable from "./components/AgGridTable.vue";
+import { getTables } from "./service/dataService";
+
+const tables = ref<Array<string>>([]);
+const currentTable = ref<string | null>();
 const openTables = ref<Array<string>>([]);
+
+const removeTable = (table: string) => {
+  openTables.value = openTables.value.filter((t) => t !== table);
+  if (currentTable.value === table) {
+    currentTable.value = null;
+  }
+};
+const addTable = (table: string) => {
+  if (!openTables.value.includes(table)) {
+    openTables.value.push(table);
+    currentTable.value = table;
+  }
+};
+
+watch(
+  () => currentTable.value,
+  (newTable) => {
+    if (newTable) {
+      addTable(newTable);
+    }
+  }
+);
+
+const filterTables = ref<string>("");
+const filteredTables = ref<Array<string>>(tables.value);
+// Filter tables
+watch(
+  () => filterTables.value,
+  (newFilter) => {
+    if (newFilter) {
+      filteredTables.value = tables.value.filter((table) =>
+        table.toLowerCase().includes(newFilter.toLowerCase())
+      );
+    } else {
+      filteredTables.value = tables.value;
+    }
+  }
+);
 
 // Table reference for calling exposed methods
 const tableRef = ref<InstanceType<typeof AgGridTable> | null>(null);
+
+onMounted(async () => {
+  tables.value = await getTables();
+  filteredTables.value = tables.value;
+});
 </script>
 
 <template>
@@ -36,25 +88,33 @@ const tableRef = ref<InstanceType<typeof AgGridTable> | null>(null);
     <header
       class="mx-auto flex h-[50px] items-center gap-2 border-b-[1px] px-4"
     >
-      <!-- Refresh button with icon -->
-      <Button variant="outline" class="size-9 p-2" size="icon">
-        <CodeIcon :size="16" />
+      <div class="flex items-center">
+        <img class="size-20 mr-2" src="/squi.svg" alt="logo" />
+      </div>
+      <!-- Refresh button -->
+      <Button
+        class="flex items-center gap-1 size-8"
+        variant="outline"
+        size="icon"
+      >
+        <RefreshCw :size="16" />
       </Button>
       <!-- Buttons for all open tables -->
       <Button
-        v-for="(table, id) in ['Customers']"
+        v-for="(table, id) in openTables"
         :key="id"
-        class="flex items-center gap-2 bg-slate-100 hover:bg-slate-100/80"
+        class="flex items-center gap-2"
+        :class="currentTable === table ? 'bg-slate-100 hover:bg-slate-100/80' : ''"
         variant="outline"
         :active="table === currentTable"
-        @click="console.log('open table')"
+        @click="currentTable = table"
       >
         <div class="">{{ table }}</div>
         <XIcon
           @click="
             (e) => {
               e.stopImmediatePropagation();
-              console.log('stoped');
+              removeTable(table);
             }
           "
           class="hover:cursor- pr-0"
@@ -67,6 +127,7 @@ const tableRef = ref<InstanceType<typeof AgGridTable> | null>(null);
         :class="
           openTables.length !== 0 ? 'bg-slate-100 hover:bg-slate-100/80' : ''
         "
+        @click="currentTable = null"
         variant="outline"
         size="icon"
       >
@@ -74,14 +135,23 @@ const tableRef = ref<InstanceType<typeof AgGridTable> | null>(null);
       </Button>
 
       <!-- Settings -->
-      <div class="ml-auto flex items-center">
+      <div class="ml-auto gap-2 flex items-center">
+        <!-- Download Button -->
+        <Button
+          class="flex items-center gap-1 size-8"
+          variant="outline"
+          size="icon"
+        >
+          <DownloadIcon :size="16" />
+        </Button>
+        <!-- Might change sthis for the theme switcher -->
         <Button class="flex items-center gap-2" variant="outline" size="sm">
           <SettingsIcon :size="16" />
         </Button>
       </div>
     </header>
 
-    <article class="h-full flex flex-col w-full">
+    <article v-if="currentTable" class="h-full flex flex-col w-full">
       <!-- Table options -->
       <section
         v-if="tableRef"
@@ -195,28 +265,40 @@ const tableRef = ref<InstanceType<typeof AgGridTable> | null>(null);
             <ChevronRightIcon :size="24" />
           </Button>
         </div>
-
-        <!-- Refresh Button -->
-        <Button
-          class="flex items-center gap-1 size-8"
-          variant="outline"
-          size="icon"
-        >
-          <RefreshCw :size="16" />
-        </Button>
-        <!-- Download Button -->
-        <Button
-          class="flex items-center gap-1 size-8"
-          variant="outline"
-          size="icon"
-        >
-          <DownloadIcon :size="16" />
-        </Button>
       </section>
       <!-- Table -->
       <output class="h-full overflow-auto pb-12">
-        <AgGridTable ref="tableRef" />
+        <AgGridTable :table="currentTable" ref="tableRef" />
       </output>
+    </article>
+
+    <article v-else class="h-full flex justify-center">
+      <Card class="w-[360px] mt-10 mb-auto">
+        <CardHeader class="border-b">
+          <CardTitle>Open a table</CardTitle>
+        </CardHeader>
+        <CardContent class="py-6 flex flex-col gap-3 min-h-[360px]">
+          <CardDescription>
+            <Input
+              v-model="filterTables"
+              class="w-full"
+              placeholder="Search for a table"
+            />
+          </CardDescription>
+          <CardDescription class="flex flex-col gap-1 overflow-y-auto">
+            <Label class="font-bold text-xl">All tables</Label>
+            <Button
+              variant="ghost"
+              @click="currentTable = table"
+              v-for="(table, id) in filteredTables"
+              :key="id"
+              class="w-full justify-start"
+            >
+              {{ table }}
+            </Button>
+          </CardDescription>
+        </CardContent>
+      </Card>
     </article>
   </main>
 </template>

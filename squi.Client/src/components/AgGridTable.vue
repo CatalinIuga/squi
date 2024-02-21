@@ -12,6 +12,13 @@ import "ag-grid-community/styles/ag-theme-quartz.css";
 import { AgGridVue } from "ag-grid-vue3";
 import { onMounted, ref } from "vue";
 
+defineProps({
+  table: {
+    type: String,
+    required: true,
+  },
+});
+
 // TABLE DATA
 const table = "Customers";
 const columnDefs = ref<ColDef[]>([]);
