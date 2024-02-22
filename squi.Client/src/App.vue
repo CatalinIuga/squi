@@ -215,12 +215,12 @@ onMounted(async () => {
           {{
             tableRef.changes.length +
             " " +
-            (tableRef.changes.length! > 1 ? "changes" : "change")
+            (tableRef.changes.length > 1 ? "changes" : "change")
           }}
         </Button>
         <!-- Discard Changes -->
         <Button
-          v-if="tableRef.changes.length! > 0"
+          v-if="tableRef.changes.length > 0"
           @click="tableRef.discardChanges"
           class="flex text-sm underline"
           variant="ghost"

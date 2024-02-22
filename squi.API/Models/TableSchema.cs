@@ -8,11 +8,6 @@ namespace Squi.Models;
 public class TableSchema
 {
     /// <summary>
-    /// The name of the table.
-    /// </summary>
-    public string Name { get; set; } = string.Empty;
-
-    /// <summary>
     /// The columns of the table.
     /// </summary>
     public List<ColumnSchema> Columns { get; set; } = new List<ColumnSchema>();
@@ -23,8 +18,6 @@ public class TableSchema
     /// <param name="schema">The schema of the table.</param>
     public TableSchema(DataTable schema)
     {
-        Name = schema.Rows[0]["TABLE_NAME"].ToString()!;
-
         foreach (DataRow row in schema.Rows)
         {
             var column = new ColumnSchema

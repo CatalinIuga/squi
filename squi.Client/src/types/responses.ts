@@ -10,6 +10,5 @@ export type ColumnSchema = {
 };
 
 export type TableSchema = {
-    name: string;
-    columns: ColumnSchema[];
+  columns: ColumnSchema[];
 };

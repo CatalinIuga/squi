@@ -104,4 +104,9 @@ public class SQLiteProvider
     {
         connection.Close();
     }
+
+    public void UpdateData(string tableName, DataTable data)
+    {
+        throw new NotImplementedException();
+    }
 }

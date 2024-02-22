@@ -71,8 +71,8 @@ const populateGrid = async (table: string) => {
     aux = data.columns.map((column) => {
       return {
         field: column.name.toString(),
-        editable: true,
-        headerClass: "font-bold text-[#64748b] ",
+        editable: column.isPrimaryKey ? false : true,
+        headerClass: "font-bold text-[#64748b]",
         cellStyle: (params) => {
           const fieldName = params.colDef.field;
           const initialValue = params.data["__initial_" + fieldName];
@@ -82,13 +82,13 @@ const populateGrid = async (table: string) => {
           }
           return { backgroundColor: "transparent", color: "inherit" };
         },
-
         cellClass: "py-[1px]",
         suppressMovable: true,
       };
     });
   });
 
+  // selection column
   aux.unshift({
     sortable: false,
     filter: false,
@@ -132,9 +132,21 @@ const onGridReady = (params: GridReadyEvent) => {
 
 const addRow = () => {
   // missing intials tho
+  console.log(
+    Object.fromEntries(
+      columnDefs.value
+        .filter((col) => Object.keys(col).includes("field"))
+        .map((col) => [col.field, "default"])
+    )
+  );
+
   gridApi.value?.applyTransaction({
     add: [
-      Object.fromEntries(columnDefs.value.map((col) => [col.field, "default"])),
+      Object.fromEntries(
+        columnDefs.value
+          .filter((col) => Object.keys(col).includes("field"))
+          .map((col) => [col.field, "default"])
+      ),
     ],
     addIndex: 0,
   });
