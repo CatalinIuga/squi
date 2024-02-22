@@ -36,6 +36,7 @@ public class SQLiteProvider
             return;
         }
         connection.ConnectionString = $"Data Source={path}";
+        connection.Open();
     }
 
     /// <summary>
@@ -44,9 +45,7 @@ public class SQLiteProvider
     /// <param name="tableName">The name of the table.</param>
     public TableSchema GetSchema(string tableName)
     {
-        connection.Open();
         var schema = connection.GetSchema("Columns", new[] { null, null, tableName });
-        connection.Close();
 
         return new TableSchema(schema);
     }
@@ -57,13 +56,11 @@ public class SQLiteProvider
     /// <param name="tableName">The name of the table.</param>
     public DataTable GetData(string tableName)
     {
-        connection.Open();
         var command = connection.CreateCommand();
         command.CommandText = $"SELECT * FROM {tableName}";
         var reader = command.ExecuteReader();
         var table = new DataTable();
         table.Load(reader);
-        connection.Close();
 
         return table;
     }
@@ -78,9 +75,7 @@ public class SQLiteProvider
             throw new Exception("Connection is null");
         }
 
-        connection.Open();
         var schema = connection.GetSchema("Tables");
-        connection.Close();
 
         return schema
             .Rows
@@ -100,5 +95,13 @@ public class SQLiteProvider
             }
             Console.WriteLine("----------------------------------");
         }
+    }
+
+    /// <summary>
+    /// Close the connection to the database.
+    /// </summary>
+    public void Close()
+    {
+        connection.Close();
     }
 }

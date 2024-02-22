@@ -7,10 +7,23 @@ var connectionString = args[0];
 var sqliteProvider = new SQLiteProvider(connectionString);
 
 var builder = WebApplication.CreateBuilder(args);
-builder.Services.AddCors();
-var app = builder.Build();
 
-app.MapGet("/", () => "Hello World!");
+builder.Services.AddCors();
+builder.Services.AddDirectoryBrowser();
+
+var app = builder.Build();
+app.UseStaticFiles();
+
+/// <summary>
+/// Serves the wwwwroot folder. Here we will server the vite production build.
+/// </summary>
+app.MapGet(
+    "/",
+    () =>
+    {
+        return Results.Redirect("/index.html");
+    }
+);
 
 /// <summary>
 /// Gets the tables in the database.
@@ -67,5 +80,8 @@ app.UseCors(options =>
     options.AllowAnyHeader();
     options.AllowAnyMethod();
 });
+
+// close the db connection when the app stops
+app.Lifetime.ApplicationStopping.Register(() => sqliteProvider.Close());
 
 app.Run();

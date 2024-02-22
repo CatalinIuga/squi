@@ -167,3 +167,22 @@
 .ag-theme-quartz .ag-header-cell-label {
   @apply justify-between;
 }
+
+.smol-bar::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+.smol-bar::-webkit-scrollbar-track {
+  margin-left: 5px;
+  margin-right: 5px;
+  margin-bottom: 5px;
+}
+
+.smol-bar::-webkit-scrollbar-thumb:hover {
+  @apply h-4 rounded-sm bg-transparent;
+}
+
+.smol-bar::-webkit-scrollbar-thumb:hover {
+  @apply bg-slate-200;
+}

@@ -10,9 +10,9 @@ import {
 import "ag-grid-community/styles/ag-grid.css";
 import "ag-grid-community/styles/ag-theme-quartz.css";
 import { AgGridVue } from "ag-grid-vue3";
-import { onMounted, ref } from "vue";
+import { onMounted, ref, watch } from "vue";
 
-defineProps({
+const props = defineProps({
   table: {
     type: String,
     required: true,
@@ -20,7 +20,6 @@ defineProps({
 });
 
 // TABLE DATA
-const table = "Customers";
 const columnDefs = ref<ColDef[]>([]);
 const rowData = ref<Record<string, any>>([]);
 
@@ -65,7 +64,7 @@ const gridOptions: GridOptions = {
   suppressRowClickSelection: true,
 };
 
-onMounted(async () => {
+const populateGrid = async (table: string) => {
   let aux: ColDef[] = [];
 
   await getTableSchema(table).then((data: TableSchema) => {
@@ -114,7 +113,18 @@ onMounted(async () => {
       return newRow;
     });
   });
+};
+
+onMounted(async () => {
+  await populateGrid(props.table);
 });
+
+watch(
+  () => props.table,
+  async (newTable) => {
+    await populateGrid(newTable);
+  }
+);
 
 const onGridReady = (params: GridReadyEvent) => {
   gridApi.value = params.api;

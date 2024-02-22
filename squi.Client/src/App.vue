@@ -32,8 +32,10 @@ import AgGridTable from "./components/AgGridTable.vue";
 import { getTables } from "./service/dataService";
 
 const tables = ref<Array<string>>([]);
-const currentTable = ref<string | null>();
-const openTables = ref<Array<string>>([]);
+const currentTable = ref<string | null>(localStorage.getItem("currentTable"));
+const openTables = ref<Array<string>>(
+  JSON.parse(localStorage.getItem("openTables") || "[]")
+);
 
 const removeTable = (table: string) => {
   openTables.value = openTables.value.filter((t) => t !== table);
@@ -49,10 +51,19 @@ const addTable = (table: string) => {
 };
 
 watch(
+  () => openTables.value,
+  (newOpenTables) => {
+    localStorage.setItem("openTables", JSON.stringify(newOpenTables));
+  },
+  { deep: true, immediate: true }
+);
+
+watch(
   () => currentTable.value,
   (newTable) => {
     if (newTable) {
       addTable(newTable);
+      localStorage.setItem("currentTable", newTable);
     }
   }
 );
@@ -99,31 +110,39 @@ onMounted(async () => {
       >
         <RefreshCw :size="16" />
       </Button>
-      <!-- Buttons for all open tables -->
-      <Button
-        v-for="(table, id) in openTables"
-        :key="id"
-        class="flex items-center gap-2"
-        :class="currentTable === table ? 'bg-slate-100 hover:bg-slate-100/80' : ''"
-        variant="outline"
-        :active="table === currentTable"
-        @click="currentTable = table"
+      <div
+        class="flex flex-1 items-centerp pt-2 pb-1 gap-2 overflow-x-scroll smol-bar"
       >
-        <div class="">{{ table }}</div>
-        <XIcon
-          @click="
-            (e) => {
-              e.stopImmediatePropagation();
-              removeTable(table);
-            }
+        <!-- Buttons for all open tables -->
+        <Button
+          v-for="(table, id) in openTables"
+          :key="id"
+          class="flex items-center gap-2"
+          :class="
+            currentTable === table ? 'bg-slate-100 hover:bg-slate-100/80' : ''
           "
-          class="hover:cursor- pr-0"
-          :size="12"
-        />
-      </Button>
+          variant="outline"
+          size="sm"
+          :active="table === currentTable"
+          @click="currentTable = table"
+        >
+          <div class="">{{ table }}</div>
+          <XIcon
+            @click="
+              (e) => {
+                e.stopImmediatePropagation();
+                removeTable(table);
+              }
+            "
+            class="hover:cursor- pr-0"
+            :size="12"
+          />
+        </Button>
+      </div>
       <!-- Open table button -->
       <Button
-        class="size-9 p-2"
+        v-if="openTables.length !== tables.length"
+        class="size-8"
         :class="
           openTables.length !== 0 ? 'bg-slate-100 hover:bg-slate-100/80' : ''
         "
@@ -272,12 +291,15 @@ onMounted(async () => {
       </output>
     </article>
 
-    <article v-else class="h-full flex justify-center">
-      <Card class="w-[360px] mt-10 mb-auto">
+    <article
+      v-else
+      class="h-full flex justify-center items-start overflow-y-auto py-10"
+    >
+      <Card class="w-[360px] h-fit mb-20">
         <CardHeader class="border-b">
           <CardTitle>Open a table</CardTitle>
         </CardHeader>
-        <CardContent class="py-6 flex flex-col gap-3 min-h-[360px]">
+        <CardContent class="py-6 flex flex-col gap-3">
           <CardDescription>
             <Input
               v-model="filterTables"
@@ -285,7 +307,7 @@ onMounted(async () => {
               placeholder="Search for a table"
             />
           </CardDescription>
-          <CardDescription class="flex flex-col gap-1 overflow-y-auto">
+          <CardDescription class="flex flex-col gap-1">
             <Label class="font-bold text-xl">All tables</Label>
             <Button
               variant="ghost"
