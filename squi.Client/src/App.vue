@@ -63,8 +63,8 @@ watch(
   (newTable) => {
     if (newTable) {
       addTable(newTable);
-      localStorage.setItem("currentTable", newTable);
     }
+    localStorage.setItem("currentTable", newTable || "");
   }
 );
 
