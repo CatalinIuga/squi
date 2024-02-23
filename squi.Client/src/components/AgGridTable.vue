@@ -19,9 +19,33 @@ const props = defineProps({
   },
 });
 
-// TABLE DATA
+const tableSchema = ref<TableSchema | null>(null);
+const tableData = ref<Record<string, any>[]>([]);
+
+/**
+ * Watch over the table prop and repopulate the grid when it changes
+ */
+watch(
+  () => props.table,
+  async (newTable) => {
+    await getGridData(newTable);
+  }
+);
+
+/**
+ * Column definitions and row data for the ag-grid
+ */
 const columnDefs = ref<ColDef[]>([]);
+
+/**
+ * Row data for the ag-grid
+ */
 const rowData = ref<Record<string, any>>([]);
+
+/**
+ * Keep track of the row count to check for new rows.
+ */
+const rowCount = ref(0);
 
 // AG-GRID CONFIG/API
 const gridApi = ref<GridApi | null>();
@@ -30,28 +54,59 @@ const gridOptions: GridOptions = {
   headerHeight: 32,
   alwaysShowHorizontalScroll: true,
   alwaysShowVerticalScroll: true,
+  onRowDataUpdated: (params) => {
+    // check if new rows were added or removed,
+    //  cell updates are handled by the onCellValueChanged event
+    const newRowCount = params.api.getDisplayedRowCount();
+
+    // no new rows were added or removed, might need to check if perhaps
+    // a row was deleted, and a new one was added
+    if (newRowCount === rowCount.value) return;
+    console.log("Changed!");
+
+    // find the new rows by checking if they have intial values
+    const newRows = params.api.getRenderedNodes().filter((row) => {
+      return !Object.keys(row.data).some((key) => key.startsWith("__initial_"));
+    });
+
+    // style the new rows
+    newRows.forEach((row) => {
+      row.setData({
+        ...row.data,
+        isnewRow: true,
+      });
+    });
+
+    newRows.map((row) => {
+      console.log(row.data);
+    });
+
+    rowCount.value = newRowCount;
+  },
   onSelectionChanged: () => {
     selectedRowsCount.value = gridApi.value?.getSelectedNodes().length || 0;
   },
   onCellValueChanged: (params) => {
-    // check if the value has changed from the initial value or by the discardChanges method
-    if (!params.node.id) return;
+    // if the row is new, we don't need to add it to the changes array
+    if (!params.node.id || params.data.isnewRow) return;
+
+    // if the value changed, add it to the changes array
     if (
       params.oldValue !== params.newValue &&
-      changes.value.findIndex(
+      valueChanges.value.findIndex(
         (change) =>
           change.nodeId === params.node.id &&
           change.col === params.column.getId()
       ) === -1
     ) {
-      changes.value.push({
+      valueChanges.value.push({
         nodeId: params.node.id,
         col: params.column.getId(),
         oldValue: params.oldValue,
         newValue: params.newValue,
       });
     } else {
-      changes.value = changes.value.filter(
+      valueChanges.value = valueChanges.value.filter(
         (change) =>
           change.nodeId !== params.node.id ||
           change.col !== params.column.getId()
@@ -64,32 +119,33 @@ const gridOptions: GridOptions = {
   suppressRowClickSelection: true,
 };
 
-const populateGrid = async (table: string) => {
-  let aux: ColDef[] = [];
+const getGridData = async (table: string) => {
+  let newColDefs: ColDef[] = [];
 
-  await getTableSchema(table).then((data: TableSchema) => {
-    aux = data.columns.map((column) => {
-      return {
-        field: column.name.toString(),
-        editable: column.isPrimaryKey ? false : true,
-        headerClass: "font-bold text-[#64748b]",
-        cellStyle: (params) => {
-          const fieldName = params.colDef.field;
-          const initialValue = params.data["__initial_" + fieldName];
+  tableSchema.value = await getTableSchema(table);
 
-          if (params.value !== initialValue) {
-            return { backgroundColor: "#FDE68A", color: "#92400E" };
-          }
-          return { backgroundColor: "transparent", color: "inherit" };
-        },
-        cellClass: "py-[1px]",
-        suppressMovable: true,
-      };
-    });
+  newColDefs = tableSchema.value.columns.map((column) => {
+    return {
+      field: column.name.toString(),
+      defaultAggFunc: "saveChanges",
+      editable: column.isAutoIncrement ? false : true,
+      headerClass: "font-bold text-[#64748b]",
+      cellStyle: (params) => {
+        const fieldName = params.colDef.field;
+        const initialValue = params.data["__initial_" + fieldName];
+
+        if (params.value !== initialValue || params.data.isnewRow) {
+          return { backgroundColor: "#FDE68A", color: "#92400E" };
+        }
+        return { backgroundColor: "transparent", color: "inherit" };
+      },
+      cellClass: "py-[1px]",
+      suppressMovable: true,
+    };
   });
 
   // selection column
-  aux.unshift({
+  newColDefs.unshift({
     sortable: false,
     filter: false,
     width: 30,
@@ -102,57 +158,52 @@ const populateGrid = async (table: string) => {
     headerCheckboxSelectionFilteredOnly: true,
   });
 
-  columnDefs.value = aux;
+  columnDefs.value = newColDefs;
 
-  await getTableData(table).then((data) => {
-    rowData.value = data.map((row: any) => {
-      const newRow = { ...row };
-      Object.keys(newRow).forEach((key) => {
-        newRow["__initial_" + key] = row[key];
-      });
-      return newRow;
+  tableData.value = await getTableData(table);
+
+  rowData.value = tableData.value.map((row: any) => {
+    const newRow: Record<string, any> = {};
+    Object.keys(row).forEach((key) => {
+      newRow[key] = row[key];
+      newRow["__initial_" + key] = row[key];
+      newRow["isnewRow"] = false;
     });
+    return newRow;
   });
+
+  rowCount.value = rowData.value.length;
 };
 
 onMounted(async () => {
-  await populateGrid(props.table);
+  await getGridData(props.table);
 });
-
-watch(
-  () => props.table,
-  async (newTable) => {
-    await populateGrid(newTable);
-  }
-);
 
 const onGridReady = (params: GridReadyEvent) => {
   gridApi.value = params.api;
 };
 
 const addRow = () => {
-  // missing intials tho
-  console.log(
-    Object.fromEntries(
-      columnDefs.value
-        .filter((col) => Object.keys(col).includes("field"))
-        .map((col) => [col.field, "default"])
-    )
-  );
-
   gridApi.value?.applyTransaction({
     add: [
       Object.fromEntries(
-        columnDefs.value
-          .filter((col) => Object.keys(col).includes("field"))
-          .map((col) => [col.field, "default"])
+        columnDefs.value.map((col) => [
+          col.field,
+          tableSchema.value!.columns.find((sch) => sch.name === col.field)
+            ?.isAutoIncrement,
+        ])
       ),
     ],
+
     addIndex: 0,
   });
 };
 
-const changes = ref<
+/**
+ * Saves the WHOLE row that was changed, while a bit unneficient,
+ * it's the easiest way to handle the changes and keep track of them.
+ */
+const valueChanges = ref<
   {
     nodeId: string;
     col: string;
@@ -162,15 +213,15 @@ const changes = ref<
 >([]);
 
 const saveChanges = () => {
-  changes.value.forEach((change) => {
+  valueChanges.value.forEach((change) => {
     const rowNode = gridApi.value?.getRowNode(change.nodeId);
-    console.log(rowNode?.data);
 
     if (rowNode) {
       rowNode.setData({
         ...rowNode.data,
         [change.col]: change.newValue,
         ["__initial_" + change.col]: change.newValue,
+        ["isnewRow"]: false,
       });
       // should probably use a toast here as well
     }
@@ -181,11 +232,11 @@ const saveChanges = () => {
     else console.log("row not found");
   });
 
-  changes.value = [];
+  valueChanges.value = [];
 };
 
 const discardChanges = () => {
-  changes.value.forEach((change) => {
+  valueChanges.value.forEach((change) => {
     const rowNode = gridApi.value?.getRowNode(change.nodeId);
     if (rowNode) rowNode.setDataValue(change.col, change.oldValue);
     // TODO use a toast!
@@ -210,7 +261,7 @@ defineExpose({
   saveChanges,
   discardChanges,
   deleteSelectedRows,
-  changes,
+  changes: valueChanges,
   selectedRowsCount,
 });
 </script>

@@ -17,5 +17,5 @@ export const getTableSchema = async (tableName: string) => {
 export const getTableData = async (tableName: string) => {
   const response = await fetch(`${baseURI}/tables/${tableName}/data`);
   const tableData = await response.json();
-  return tableData.slice(0, 100);
+  return tableData.slice(0, 100) as Record<string, any>[];
 };
