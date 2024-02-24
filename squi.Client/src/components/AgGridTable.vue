@@ -206,7 +206,6 @@ function saveChanges() {
 
   valueChanges.value = [];
 
-  // new rows
   newRows.value.forEach((row) => {
     row.setData({
       ...Object.keys(row.data).reduce((acc, key) => {

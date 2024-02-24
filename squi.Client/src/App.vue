@@ -91,6 +91,8 @@ onMounted(async () => {
   tables.value = await getTables();
   filteredTables.value = tables.value;
 });
+
+const refresh = () => window.location.reload();
 </script>
 
 <template>
@@ -106,6 +108,7 @@ onMounted(async () => {
       <Button
         class="flex items-center gap-1 size-8"
         variant="outline"
+        @click="refresh"
         size="icon"
       >
         <RefreshCw :size="16" />
