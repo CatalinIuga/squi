@@ -6,11 +6,12 @@ import {
   GridApi,
   GridOptions,
   GridReadyEvent,
+  IRowNode,
 } from "ag-grid-community";
 import "ag-grid-community/styles/ag-grid.css";
 import "ag-grid-community/styles/ag-theme-quartz.css";
 import { AgGridVue } from "ag-grid-vue3";
-import { onMounted, ref, watch } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
 
 const props = defineProps({
   table: {
@@ -42,10 +43,9 @@ const columnDefs = ref<ColDef[]>([]);
  */
 const rowData = ref<Record<string, any>>([]);
 
-/**
- * Keep track of the row count to check for new rows.
- */
-const rowCount = ref(0);
+const selectedRowsCount = ref(0);
+
+const newRows = ref<IRowNode[]>([]);
 
 // AG-GRID CONFIG/API
 const gridApi = ref<GridApi | null>();
@@ -55,33 +55,15 @@ const gridOptions: GridOptions = {
   alwaysShowHorizontalScroll: true,
   alwaysShowVerticalScroll: true,
   onRowDataUpdated: (params) => {
-    // check if new rows were added or removed,
-    //  cell updates are handled by the onCellValueChanged event
     const newRowCount = params.api.getDisplayedRowCount();
 
-    // no new rows were added or removed, might need to check if perhaps
-    // a row was deleted, and a new one was added
-    if (newRowCount === rowCount.value) return;
-    console.log("Changed!");
+    if (newRowCount === tableData.value.length) return;
 
-    // find the new rows by checking if they have intial values
-    const newRows = params.api.getRenderedNodes().filter((row) => {
-      return !Object.keys(row.data).some((key) => key.startsWith("__initial_"));
-    });
+    newRows.value = params.api
+      .getRenderedNodes()
+      .filter((row) => row.data.isnewRow);
 
-    // style the new rows
-    newRows.forEach((row) => {
-      row.setData({
-        ...row.data,
-        isnewRow: true,
-      });
-    });
-
-    newRows.map((row) => {
-      console.log(row.data);
-    });
-
-    rowCount.value = newRowCount;
+    console.log(newRows.value);
   },
   onSelectionChanged: () => {
     selectedRowsCount.value = gridApi.value?.getSelectedNodes().length || 0;
@@ -113,6 +95,7 @@ const gridOptions: GridOptions = {
       );
     }
   },
+  pinnedTopRowData: newRows.value,
   animateRows: false,
   rowHeight: 32,
   unSortIcon: true,
@@ -171,38 +154,12 @@ const getGridData = async (table: string) => {
     });
     return newRow;
   });
-
-  rowCount.value = rowData.value.length;
 };
 
 onMounted(async () => {
   await getGridData(props.table);
 });
 
-const onGridReady = (params: GridReadyEvent) => {
-  gridApi.value = params.api;
-};
-
-const addRow = () => {
-  gridApi.value?.applyTransaction({
-    add: [
-      Object.fromEntries(
-        columnDefs.value.map((col) => [
-          col.field,
-          tableSchema.value!.columns.find((sch) => sch.name === col.field)
-            ?.isAutoIncrement,
-        ])
-      ),
-    ],
-
-    addIndex: 0,
-  });
-};
-
-/**
- * Saves the WHOLE row that was changed, while a bit unneficient,
- * it's the easiest way to handle the changes and keep track of them.
- */
 const valueChanges = ref<
   {
     nodeId: string;
@@ -212,7 +169,22 @@ const valueChanges = ref<
   }[]
 >([]);
 
-const saveChanges = () => {
+const onGridReady = (params: GridReadyEvent) => {
+  gridApi.value = params.api;
+};
+
+const addRow = () => {
+  const newRow: Record<string, any> = {};
+  tableSchema.value?.columns.forEach((column) => {
+    newRow[column.name] = null;
+    newRow["__initial_" + column.name] = null;
+    newRow["isnewRow"] = true;
+  });
+
+  gridApi.value?.applyTransaction({ add: [newRow], addIndex: 0 });
+};
+
+function saveChanges() {
   valueChanges.value.forEach((change) => {
     const rowNode = gridApi.value?.getRowNode(change.nodeId);
 
@@ -233,20 +205,55 @@ const saveChanges = () => {
   });
 
   valueChanges.value = [];
-};
 
-const discardChanges = () => {
+  // new rows
+  newRows.value.forEach((row) => {
+    row.setData({
+      ...Object.keys(row.data).reduce((acc, key) => {
+        if (key !== "isnewRow" && !key.includes("__initial")) {
+          Object.assign(acc, {
+            [key]: row.data[key],
+            ["__initial_" + key]: row.data[key],
+          });
+        }
+        return acc;
+      }, {}),
+      isnewRow: false,
+    });
+  });
+
+  newRows.value = newRows.value.filter((row) => row.data.isnewRow);
+}
+
+function discardChanges() {
   valueChanges.value.forEach((change) => {
     const rowNode = gridApi.value?.getRowNode(change.nodeId);
-    if (rowNode) rowNode.setDataValue(change.col, change.oldValue);
-    // TODO use a toast!
-    else console.log("row not found");
+    if (rowNode) {
+      console.log(rowNode.data, change.col, change.oldValue);
+
+      rowNode.setData({
+        ...rowNode.data,
+        [change.col]: change.oldValue,
+        ["__initial_" + change.col]: change.oldValue,
+      });
+    } else console.log("row not found");
   });
-};
 
-const selectedRowsCount = ref(0);
+  newRows.value.forEach((row) => {
+    const toDelete = gridApi.value?.getDisplayedRowAtIndex(row.rowIndex!);
 
-const deleteSelectedRows = () => {
+    if (toDelete) {
+      gridApi.value?.applyTransaction({ remove: [toDelete.data] });
+    }
+  });
+
+  valueChanges.value = [];
+  newRows.value = [];
+
+  console.log(newRows.value.length, valueChanges.value.length);
+}
+
+function deleteSelectedRows() {
   const selectedRows = gridApi.value?.getSelectedRows();
   if (selectedRows) {
     gridApi.value?.applyTransaction({ remove: selectedRows });
@@ -254,14 +261,18 @@ const deleteSelectedRows = () => {
   // TODO use a unique id for each row and check the changes array for any changes to the deleted rows
 
   selectedRowsCount.value = 0;
-};
+}
+
+const totalChanges = computed(() => {
+  return valueChanges.value.length + newRows.value.length;
+});
 
 defineExpose({
   addRow,
   saveChanges,
   discardChanges,
   deleteSelectedRows,
-  changes: valueChanges,
+  changes: totalChanges,
   selectedRowsCount,
 });
 </script>

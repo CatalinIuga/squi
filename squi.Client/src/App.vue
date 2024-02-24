@@ -206,21 +206,21 @@ onMounted(async () => {
         <!-- Save Changes -->
         <Button
           class="flex text-sm bg-green-600 hover:bg-green-600/80"
-          v-if="tableRef.changes.length! > 0"
+          v-if="tableRef.changes > 0"
           @click="tableRef.saveChanges"
           variant="default"
           size="sm"
         >
           Save
           {{
-            tableRef.changes.length +
+            tableRef.changes +
             " " +
-            (tableRef.changes.length > 1 ? "changes" : "change")
+            (tableRef.changes > 1 ? "changes" : "change")
           }}
         </Button>
         <!-- Discard Changes -->
         <Button
-          v-if="tableRef.changes.length > 0"
+          v-if="tableRef.changes > 0"
           @click="tableRef.discardChanges"
           class="flex text-sm underline"
           variant="ghost"
