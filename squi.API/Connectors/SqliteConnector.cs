@@ -136,12 +136,19 @@ public class SQLiteProvider
         var columns = dt.Rows.Cast<DataRow>().Select(x => x["COLUMN_NAME"].ToString()).ToArray();
 
         var command = connection.CreateCommand();
+
         command.CommandText =
-            $"UPDATE {tableName} SET {string.Join(", ", columns.Select(x => $"{x} = @{x}"))} WHERE {columns[0]} = @{columns[0]}";
+            $"UPDATE {tableName} SET {string.Join(", ", columns.Select(x => $"{x} = @{x}"))} WHERE {string.Join(" AND ", columns.Select(x => $"{x} = @__initial_{x}"))} RETURNING *";
+
         foreach (var column in columns)
         {
             if (column is not null)
-                command.Parameters.Add(new SQLiteParameter($"@{column}", data[column].ToString()));
+            {
+                command.Parameters.Add(new SQLiteParameter($"@{column}", data[column]));
+                command
+                    .Parameters
+                    .Add(new SQLiteParameter($"@__initial_{column}", data[$"__initial_{column}"]));
+            }
         }
 
         var reader = command.ExecuteReader();

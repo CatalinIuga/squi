@@ -4,6 +4,7 @@ import {
   getTableData,
   getTableSchema,
   insertTableData,
+  updateTableData,
 } from "@/service/dataService";
 import { TableSchema } from "@/types/responses";
 import {
@@ -202,17 +203,37 @@ const addRow = () => {
 async function saveChanges() {
   gridApi.value?.stopEditing();
 
-  valueChanges.value.forEach((change) => {
+  valueChanges.value.forEach(async (change) => {
     const rowNode = gridApi.value?.getRowNode(change.nodeId);
 
     if (rowNode) {
-      rowNode.setData({
-        ...rowNode.data,
-        [change.col]: change.newValue,
-        ["__initial_" + change.col]: change.newValue,
-        ["isnewRow"]: false,
-      });
-      // the server will get the whole row data, so we don't need to send the changes one by one
+      try {
+        const updatedRow = await updateTableData(props.table, rowNode.data);
+        if (updatedRow.data) {
+          rowNode.setData({
+            ...Object.keys(rowNode.data).reduce((acc, key) => {
+              if (key !== "isnewRow" && !key.includes("__initial")) {
+                Object.assign(acc, {
+                  [key]: updatedRow.data ? updatedRow.data[key] : null,
+                  ["__initial_" + key]: updatedRow.data
+                    ? updatedRow.data[key]
+                    : null,
+                });
+              }
+              return acc;
+            }, {}),
+            isnewRow: false,
+          });
+        }
+      } catch (e) {
+        console.error(e);
+      }
+      // rowNode.setData({
+      //   ...rowNode.data,
+      //   [change.col]: change.newValue,
+      //   ["__initial_" + change.col]: change.newValue,
+      //   ["isnewRow"]: false,
+      // });
     }
 
     // TODO send the changes to the server
