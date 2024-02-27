@@ -14,8 +14,15 @@ export const getTableSchema = async (tableName: string) => {
   return table;
 };
 
-export const getTableData = async (tableName: string) => {
-  const response = await fetch(`${baseURI}/tables/${tableName}/data`);
+export const getTableData = async (
+  tableName: string,
+  limit: number = 50,
+  offset: number = 0
+) => {
+  const url = new URL(`${baseURI}/tables/${tableName}/data`);
+  url.searchParams.append("limit", limit.toString());
+  url.searchParams.append("offset", offset.toString());
+  const response = await fetch(url);
   const tableData = await response.json();
   return tableData.slice(0, 100) as Record<string, any>[];
 };

@@ -30,9 +30,13 @@ public class DbController : ControllerBase
     }
 
     [HttpGet("{tableName}/data")]
-    public ActionResult<IEnumerable<IDictionary<string, object>>> GetData(string tableName)
+    public ActionResult<IEnumerable<IDictionary<string, object>>> GetData(
+        string tableName,
+        [FromQuery] int limit = 50,
+        [FromQuery] int offset = 0
+    )
     {
-        var data = _sqliteProvider.GetData(tableName);
+        var data = _sqliteProvider.GetData(tableName, limit, offset);
         var aux = data.AsEnumerable()
             .Select(
                 row =>
@@ -82,9 +86,7 @@ public class DbController : ControllerBase
     {
         try
         {
-            var deleted = _sqliteProvider.DeleteData(tableName, data);
-            if (deleted == 0)
-                return BadRequest(new { message = "Data not found" });
+            _sqliteProvider.DeleteData(tableName, data);
             return Ok(new { message = "Data deleted" });
         }
         catch (Exception e)

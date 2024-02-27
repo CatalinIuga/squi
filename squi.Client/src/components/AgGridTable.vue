@@ -19,6 +19,14 @@ import { AgGridVue } from "ag-grid-vue3";
 import { computed, onMounted, ref, watch } from "vue";
 
 const props = defineProps({
+  limit: {
+    type: Number,
+    required: true,
+  },
+  offset: {
+    type: Number,
+    required: true,
+  },
   table: {
     type: String,
     required: true,
@@ -32,10 +40,11 @@ const tableData = ref<Record<string, any>[]>([]);
  * Watch over the table prop and repopulate the grid when it changes
  */
 watch(
-  () => props.table,
-  async (newTable) => {
-    await getGridData(newTable);
-  }
+  [() => props.table, () => props.limit, () => props.offset],
+  async ([newTable, newLimit, newOffset]: [string, number, number]) => {
+    await getGridData(newTable.toString(), newLimit, newOffset);
+  },
+  { deep: true }
 );
 
 /**
@@ -105,7 +114,7 @@ const gridOptions: GridOptions = {
   suppressRowClickSelection: true,
 };
 
-const getGridData = async (table: string) => {
+const getGridData = async (table: string, limit: number, offset: number) => {
   let newColDefs: ColDef[] = [];
 
   tableSchema.value = await getTableSchema(table);
@@ -149,7 +158,7 @@ const getGridData = async (table: string) => {
 
   columnDefs.value = newColDefs;
 
-  tableData.value = await getTableData(table);
+  tableData.value = await getTableData(table, limit, offset);
 
   rowData.value = tableData.value.map((row: any) => {
     const newRow: Record<string, any> = {};
@@ -163,7 +172,7 @@ const getGridData = async (table: string) => {
 };
 
 onMounted(async () => {
-  await getGridData(props.table);
+  await getGridData(props.table, props.limit, props.offset);
 });
 
 const valueChanges = ref<
@@ -217,7 +226,7 @@ async function saveChanges() {
   newRows.value.forEach(async (row) => {
     try {
       const newRow = await insertTableData(props.table, row.data);
-      if (newRow.data)
+      if (newRow.data) {
         row.setData({
           ...Object.keys(row.data).reduce((acc, key) => {
             if (key !== "isnewRow" && !key.includes("__initial")) {
@@ -230,6 +239,8 @@ async function saveChanges() {
           }, {}),
           isnewRow: false,
         });
+        tableSchema.value!.rowCount++;
+      }
     } catch (e) {
       console.error(e);
     }
@@ -276,6 +287,7 @@ async function deleteSelectedRows() {
 
       if (deleted) {
         gridApi.value?.applyTransaction({ remove: [row] });
+        tableSchema.value!.rowCount--;
       }
     });
   }
@@ -287,12 +299,17 @@ const totalChanges = computed(() => {
   return valueChanges.value.length + newRows.value.length;
 });
 
+const rowCounter = computed(() => {
+  return tableSchema.value?.rowCount;
+});
+
 defineExpose({
   addRow,
   saveChanges,
   discardChanges,
   deleteSelectedRows,
   changes: totalChanges,
+  rowCounter,
   selectedRowsCount,
 });
 </script>

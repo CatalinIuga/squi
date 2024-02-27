@@ -7,6 +7,8 @@ namespace Squi.Models;
 /// </summary>
 public class TableSchema
 {
+    public int RowCount { get; set; }
+
     /// <summary>
     /// The columns of the table.
     /// </summary>
@@ -15,8 +17,7 @@ public class TableSchema
     /// <summary>
     /// Initializes a new instance of the <see cref="TableSchema"/> class.
     /// </summary>
-    /// <param name="schema">The schema of the table.</param>
-    public TableSchema(DataTable schema)
+    public TableSchema(DataTable schema, int rowCount)
     {
         foreach (DataRow row in schema.Rows)
         {
@@ -34,5 +35,6 @@ public class TableSchema
 
             Columns.Add(column);
         }
+        RowCount = rowCount;
     }
 }

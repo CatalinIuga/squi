@@ -1,4 +1,5 @@
 using System.Data;
+using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using Squi.Connectors;
 
@@ -25,6 +26,7 @@ app.UseCors(options =>
     options.AllowAnyMethod();
 });
 
+app.MapGet("/", () => Results.Redirect("/index.html"));
 app.MapControllers();
 
 if (app.Environment.IsDevelopment())
@@ -35,5 +37,17 @@ if (app.Environment.IsDevelopment())
 
 // close the db connection when the app stops
 app.Lifetime.ApplicationStopping.Register(() => sqliteProvider.Close());
+
+// open the default browser
+Process.Start(
+    new ProcessStartInfo
+    {
+        FileName = app.Environment.IsDevelopment()
+            ? "http://localhost:5173"
+            : "http://localhost:5076",
+        UseShellExecute = true,
+        Verb = "open"
+    }
+);
 
 app.Run();

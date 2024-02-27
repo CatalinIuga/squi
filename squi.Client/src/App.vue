@@ -32,9 +32,25 @@ import AgGridTable from "./components/AgGridTable.vue";
 import { getTables } from "./service/dataService";
 
 const tables = ref<Array<string>>([]);
+const limit = ref<number>(50);
+const offset = ref<number>(0);
 const currentTable = ref<string | null>(localStorage.getItem("currentTable"));
 const openTables = ref<Array<string>>(
   JSON.parse(localStorage.getItem("openTables") || "[]")
+);
+
+// check if offset or limit go below 0
+watch(
+  [() => limit.value, () => offset.value],
+  ([newLimit, newOffset]) => {
+    if (newLimit < 1) {
+      limit.value = 1;
+    }
+    if (newOffset < 0) {
+      offset.value = 0;
+    }
+  },
+  { deep: true }
 );
 
 const removeTable = (table: string) => {
@@ -244,12 +260,13 @@ const refresh = () => window.location.reload();
 
         <div class="ml-auto flex items-center gap-2">
           <!-- No. of rows -->
-          <div class="">50 rows</div>
+          <div class="">{{ tableRef.rowCounter }} rows</div>
           <!-- Prev -->
           <Button
             class="flex items-center size-8 gap-1"
             variant="ghost"
             size="icon"
+            @click="offset -= limit"
           >
             <ChevronLeftIcon :size="24" />
           </Button>
@@ -258,7 +275,7 @@ const refresh = () => window.location.reload();
           <TooltipProvider :delay-duration="300">
             <Tooltip>
               <TooltipTrigger>
-                <Input class="w-20 h-8" default-value="50" />
+                <Input type="number" min="1" class="w-20 h-8" v-model="limit" />
               </TooltipTrigger>
               <TooltipContent class="bg-background border text-foreground">
                 LIMIT
@@ -270,7 +287,12 @@ const refresh = () => window.location.reload();
           <TooltipProvider :delay-duration="300">
             <Tooltip>
               <TooltipTrigger>
-                <Input class="w-20 h-8" default-value="0" />
+                <Input
+                  min="0"
+                  type="number"
+                  class="w-20 h-8"
+                  v-model="offset"
+                />
               </TooltipTrigger>
               <TooltipContent class="bg-background border text-foreground">
                 OFFSET
@@ -283,6 +305,7 @@ const refresh = () => window.location.reload();
             class="flex items-center gap-1 size-8"
             variant="ghost"
             size="icon"
+            @click="offset += limit"
           >
             <ChevronRightIcon :size="24" />
           </Button>
@@ -290,7 +313,12 @@ const refresh = () => window.location.reload();
       </section>
       <!-- Table -->
       <output class="h-full overflow-auto pb-12">
-        <AgGridTable :table="currentTable" ref="tableRef" />
+        <AgGridTable
+          :limit="limit"
+          :offset="offset"
+          :table="currentTable"
+          ref="tableRef"
+        />
       </output>
     </article>
 

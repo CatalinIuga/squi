@@ -46,18 +46,20 @@ public class SQLiteProvider
     public TableSchema GetSchema(string tableName)
     {
         var schema = connection.GetSchema("Columns", new[] { null, null, tableName });
-
-        return new TableSchema(schema);
+        var cmd = connection.CreateCommand();
+        cmd.CommandText = $"SELECT COUNT(*) FROM {tableName}";
+        var rowCount = cmd.ExecuteScalar();
+        return new TableSchema(schema, rowCount is null ? 0 : Convert.ToInt32(rowCount));
     }
 
     /// <summary>
     /// Gets the data from a table.
     /// </summary>
     /// <param name="tableName">The name of the table.</param>
-    public DataTable GetData(string tableName)
+    public DataTable GetData(string tableName, int limit, int offset)
     {
         var command = connection.CreateCommand();
-        command.CommandText = $"SELECT * FROM {tableName}";
+        command.CommandText = $"SELECT * FROM {tableName} LIMIT {limit} OFFSET {offset}";
         var reader = command.ExecuteReader();
         var table = new DataTable();
         table.Load(reader);
@@ -162,22 +164,22 @@ public class SQLiteProvider
         return row;
     }
 
-    public int DeleteData(string tableName, IDictionary<string, object?> data)
+    public void DeleteData(string tableName, IDictionary<string, object?> data)
     {
         var dt = connection.GetSchema("Columns", new[] { null, null, tableName });
         var columns = dt.Rows.Cast<DataRow>().Select(x => x["COLUMN_NAME"].ToString()).ToArray();
 
         var command = connection.CreateCommand();
         command.CommandText =
-            $"DELETE FROM {tableName} WHERE {string.Join(" AND ", columns.Select(x => $"{x} {(data[x] == null ? "IS NULL" : $"= @{x}")}"))}";
+            $"DELETE FROM {tableName} WHERE {string.Join(" AND ", columns.Select(x => $"{x} {(data[x!] is null ? "IS NULL" : $"= @{x}")}"))}";
 
         foreach (var column in columns)
         {
             if (column is not null)
                 command.Parameters.Add(new SQLiteParameter($"@{column}", data[column]));
         }
-        var deleted = command.ExecuteNonQuery();
-        return deleted;
+        if (command.ExecuteNonQuery() == 0)
+            throw new Exception("Could not delete data.");
     }
 
     /// <summary>

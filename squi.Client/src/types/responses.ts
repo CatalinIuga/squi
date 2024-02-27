@@ -10,6 +10,7 @@ export type ColumnSchema = {
 };
 
 export type TableSchema = {
+  rowCount: number;
   columns: ColumnSchema[];
 };
 
