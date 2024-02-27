@@ -324,7 +324,16 @@ const rowCounter = computed(() => {
   return tableSchema.value?.rowCount;
 });
 
+const refreshGrid = async () => {
+  // discardChanges();
+  newRows.value = [];
+  valueChanges.value = [];
+
+  await getGridData(props.table, props.limit, props.offset);
+};
+
 defineExpose({
+  refreshGrid,
   addRow,
   saveChanges,
   discardChanges,
