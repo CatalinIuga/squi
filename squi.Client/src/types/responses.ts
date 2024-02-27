@@ -12,3 +12,8 @@ export type ColumnSchema = {
 export type TableSchema = {
   columns: ColumnSchema[];
 };
+
+export type ApiResponse = {
+  data: Record<string, any> | null;
+  message: string;
+};

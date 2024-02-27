@@ -85,7 +85,10 @@ public class SQLiteProvider
             .ToArray();
     }
 
-    public void InsertData(string tableName, IDictionary<string, object> data)
+    public IDictionary<string, object?> InsertData(
+        string tableName,
+        IDictionary<string, object> data
+    )
     {
         var dt = connection.GetSchema("Columns", new[] { null, null, tableName });
         var columns = dt.Rows
@@ -94,21 +97,38 @@ public class SQLiteProvider
             .Select(x => x["COLUMN_NAME"].ToString())
             .ToArray();
 
-        Console.WriteLine(data["Name"]);
-
         var command = connection.CreateCommand();
         command.CommandText =
-            $"INSERT INTO {tableName} ({string.Join(", ", columns)}) VALUES ({string.Join(", ", columns.Select(x => $"@{x}"))})";
+            $"INSERT INTO {tableName} ({string.Join(", ", columns)}) VALUES ({string.Join(", ", columns.Select(x => $"@{x}"))}) RETURNING *";
         foreach (var column in columns)
         {
             if (column is not null)
                 command.Parameters.Add(new SQLiteParameter($"@{column}", data[column]));
         }
 
-        command.ExecuteNonQuery();
+        var reader = command.ExecuteReader();
+        var table = new DataTable();
+        table.Load(reader);
+
+        var row =
+            table
+                .Rows
+                .Cast<DataRow>()
+                .First()
+                .Table
+                .Columns
+                .Cast<DataColumn>()
+                .ToDictionary(
+                    col => col.ColumnName,
+                    col => table.Rows[0][col] is DBNull ? null : table.Rows[0][col]
+                ) ?? throw new Exception("Could not insert data.");
+        return row;
     }
 
-    public void UpdateData(string tableName, IDictionary<string, object> data)
+    public IDictionary<string, object?> UpdateData(
+        string tableName,
+        IDictionary<string, object> data
+    )
     {
         var dt = connection.GetSchema("Columns", new[] { null, null, tableName });
         var columns = dt.Rows.Cast<DataRow>().Select(x => x["COLUMN_NAME"].ToString()).ToArray();
@@ -119,27 +139,45 @@ public class SQLiteProvider
         foreach (var column in columns)
         {
             if (column is not null)
-                command.Parameters.Add(new SQLiteParameter($"@{column}", data[column]));
+                command.Parameters.Add(new SQLiteParameter($"@{column}", data[column].ToString()));
         }
 
-        command.ExecuteNonQuery();
+        var reader = command.ExecuteReader();
+        var table = new DataTable();
+        table.Load(reader);
+
+        var row =
+            table
+                .Rows
+                .Cast<DataRow>()
+                .First()
+                .Table
+                .Columns
+                .Cast<DataColumn>()
+                .ToDictionary(
+                    col => col.ColumnName,
+                    col => table.Rows[0][col] is DBNull ? null : table.Rows[0][col]
+                ) ?? throw new Exception("Could not update data.");
+
+        return row;
     }
 
-    public void DeleteData(string tableName, IDictionary<string, object> data)
+    public int DeleteData(string tableName, IDictionary<string, object?> data)
     {
         var dt = connection.GetSchema("Columns", new[] { null, null, tableName });
         var columns = dt.Rows.Cast<DataRow>().Select(x => x["COLUMN_NAME"].ToString()).ToArray();
 
         var command = connection.CreateCommand();
         command.CommandText =
-            $"DELETE FROM {tableName} WHERE {string.Join(" AND ", columns.Select(x => $"{x} = @{x}"))}";
+            $"DELETE FROM {tableName} WHERE {string.Join(" AND ", columns.Select(x => $"{x} {(data[x] == null ? "IS NULL" : $"= @{x}")}"))}";
+
         foreach (var column in columns)
         {
             if (column is not null)
                 command.Parameters.Add(new SQLiteParameter($"@{column}", data[column]));
         }
-
-        command.ExecuteNonQuery();
+        var deleted = command.ExecuteNonQuery();
+        return deleted;
     }
 
     /// <summary>

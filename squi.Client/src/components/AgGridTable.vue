@@ -1,5 +1,10 @@
 <script setup lang="ts">
-import { getTableData, getTableSchema } from "@/service/dataService";
+import {
+  deleteTableData,
+  getTableData,
+  getTableSchema,
+  insertTableData,
+} from "@/service/dataService";
 import { TableSchema } from "@/types/responses";
 import {
   ColDef,
@@ -62,8 +67,6 @@ const gridOptions: GridOptions = {
     newRows.value = params.api
       .getRenderedNodes()
       .filter((row) => row.data.isnewRow);
-
-    console.log(newRows.value);
   },
   onSelectionChanged: () => {
     selectedRowsCount.value = gridApi.value?.getSelectedNodes().length || 0;
@@ -122,7 +125,10 @@ const getGridData = async (table: string) => {
         }
         return { backgroundColor: "transparent", color: "inherit" };
       },
-      cellClass: "py-[1px]",
+      cellClass:
+        "py-[1.75px] " +
+        (column.isAutoIncrement ? "focus:cursor-not-allowed" : ""),
+
       suppressMovable: true,
     };
   });
@@ -184,7 +190,9 @@ const addRow = () => {
   gridApi.value?.applyTransaction({ add: [newRow], addIndex: 0 });
 };
 
-function saveChanges() {
+async function saveChanges() {
+  gridApi.value?.stopEditing();
+
   valueChanges.value.forEach((change) => {
     const rowNode = gridApi.value?.getRowNode(change.nodeId);
 
@@ -195,9 +203,8 @@ function saveChanges() {
         ["__initial_" + change.col]: change.newValue,
         ["isnewRow"]: false,
       });
-      // sending this back to the server will be done here, and will need to get the PK of the row
-      // or the whole row to send it to the server (if the is no PK)
-    } 
+      // the server will get the whole row data, so we don't need to send the changes one by one
+    }
 
     // TODO send the changes to the server
 
@@ -207,22 +214,27 @@ function saveChanges() {
 
   valueChanges.value = [];
 
-  newRows.value.forEach((row) => {
-    row.setData({
-      ...Object.keys(row.data).reduce((acc, key) => {
-        if (key !== "isnewRow" && !key.includes("__initial")) {
-          Object.assign(acc, {
-            [key]: row.data[key],
-            ["__initial_" + key]: row.data[key],
-          });
-        }
-        return acc;
-      }, {}),
-      isnewRow: false,
-    });
+  newRows.value.forEach(async (row) => {
+    try {
+      const newRow = await insertTableData(props.table, row.data);
+      if (newRow.data)
+        row.setData({
+          ...Object.keys(row.data).reduce((acc, key) => {
+            if (key !== "isnewRow" && !key.includes("__initial")) {
+              Object.assign(acc, {
+                [key]: newRow.data ? newRow.data[key] : null,
+                ["__initial_" + key]: newRow.data ? newRow.data[key] : null,
+              });
+            }
+            return acc;
+          }, {}),
+          isnewRow: false,
+        });
+    } catch (e) {
+      console.error(e);
+    }
+    newRows.value = newRows.value.filter((r) => r.data.isnewRow);
   });
-
-  newRows.value = newRows.value.filter((row) => row.data.isnewRow);
 }
 
 function discardChanges() {
@@ -253,14 +265,22 @@ function discardChanges() {
   console.log(newRows.value.length, valueChanges.value.length);
 }
 
-function deleteSelectedRows() {
+async function deleteSelectedRows() {
   const selectedRows = gridApi.value?.getSelectedRows();
   if (selectedRows) {
-    gridApi.value?.applyTransaction({ remove: selectedRows });
-  }
-  // TODO use a unique id for each row and check the changes array for any changes to the deleted rows
+    selectedRows.forEach(async (row) => {
+      let deleted = true;
+      if (!row.isnewRow) {
+        deleted = await deleteTableData(props.table, row);
+      }
 
-  selectedRowsCount.value = 0;
+      if (deleted) {
+        gridApi.value?.applyTransaction({ remove: [row] });
+      }
+    });
+  }
+
+  selectedRowsCount.value = gridApi.value?.getSelectedNodes().length || 0;
 }
 
 const totalChanges = computed(() => {
