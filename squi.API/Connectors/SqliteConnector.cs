@@ -85,16 +85,61 @@ public class SQLiteProvider
             .ToArray();
     }
 
-    public static void DisplayData(DataTable table)
+    public void InsertData(string tableName, IDictionary<string, object> data)
     {
-        foreach (DataRow row in table.Rows)
+        var dt = connection.GetSchema("Columns", new[] { null, null, tableName });
+        var columns = dt.Rows
+            .Cast<DataRow>()
+            .Where(x => x["AUTOINCREMENT"].ToString()! == "False")
+            .Select(x => x["COLUMN_NAME"].ToString())
+            .ToArray();
+
+        Console.WriteLine(data["Name"]);
+
+        var command = connection.CreateCommand();
+        command.CommandText =
+            $"INSERT INTO {tableName} ({string.Join(", ", columns)}) VALUES ({string.Join(", ", columns.Select(x => $"@{x}"))})";
+        foreach (var column in columns)
         {
-            foreach (DataColumn column in table.Columns)
-            {
-                Console.WriteLine($"{column.ColumnName}: {row[column]}");
-            }
-            Console.WriteLine("----------------------------------");
+            if (column is not null)
+                command.Parameters.Add(new SQLiteParameter($"@{column}", data[column]));
         }
+
+        command.ExecuteNonQuery();
+    }
+
+    public void UpdateData(string tableName, IDictionary<string, object> data)
+    {
+        var dt = connection.GetSchema("Columns", new[] { null, null, tableName });
+        var columns = dt.Rows.Cast<DataRow>().Select(x => x["COLUMN_NAME"].ToString()).ToArray();
+
+        var command = connection.CreateCommand();
+        command.CommandText =
+            $"UPDATE {tableName} SET {string.Join(", ", columns.Select(x => $"{x} = @{x}"))} WHERE {columns[0]} = @{columns[0]}";
+        foreach (var column in columns)
+        {
+            if (column is not null)
+                command.Parameters.Add(new SQLiteParameter($"@{column}", data[column]));
+        }
+
+        command.ExecuteNonQuery();
+    }
+
+    public void DeleteData(string tableName, IDictionary<string, object> data)
+    {
+        var dt = connection.GetSchema("Columns", new[] { null, null, tableName });
+        var columns = dt.Rows.Cast<DataRow>().Select(x => x["COLUMN_NAME"].ToString()).ToArray();
+
+        var command = connection.CreateCommand();
+        command.CommandText =
+            $"DELETE FROM {tableName} WHERE {string.Join(" AND ", columns.Select(x => $"{x} = @{x}"))}";
+        foreach (var column in columns)
+        {
+            if (column is not null)
+                command.Parameters.Add(new SQLiteParameter($"@{column}", data[column]));
+        }
+
+        command.ExecuteNonQuery();
     }
 
     /// <summary>
@@ -103,10 +148,5 @@ public class SQLiteProvider
     public void Close()
     {
         connection.Close();
-    }
-
-    public void UpdateData(string tableName, DataTable data)
-    {
-        throw new NotImplementedException();
     }
 }

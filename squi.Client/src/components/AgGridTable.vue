@@ -195,8 +195,9 @@ function saveChanges() {
         ["__initial_" + change.col]: change.newValue,
         ["isnewRow"]: false,
       });
-      // should probably use a toast here as well
-    }
+      // sending this back to the server will be done here, and will need to get the PK of the row
+      // or the whole row to send it to the server (if the is no PK)
+    } 
 
     // TODO send the changes to the server
 

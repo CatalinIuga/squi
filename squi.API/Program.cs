@@ -1,5 +1,6 @@
 using System.Data;
 using System.Text.Json;
+using Microsoft.AspNetCore.Mvc;
 using Squi.Connectors;
 
 var connectionString = args[0];
@@ -71,6 +72,33 @@ app.MapGet(
             .ToArray();
 
         return JsonSerializer.Serialize(aux);
+    }
+);
+
+app.MapPost(
+    "/tables/{tableName}/data",
+    (string tableName, [FromBody] IDictionary<string, object> data) =>
+    {
+        sqliteProvider.InsertData(tableName, data);
+        return Results.Ok();
+    }
+);
+
+app.MapPut(
+    "/tables/{tableName}/data",
+    (string tableName, [FromBody] IDictionary<string, object> data) =>
+    {
+        sqliteProvider.UpdateData(tableName, data);
+        return Results.Ok();
+    }
+);
+
+app.MapDelete(
+    "/tables/{tableName}/data",
+    (string tableName, [FromBody] IDictionary<string, object> data) =>
+    {
+        sqliteProvider.DeleteData(tableName, data);
+        return Results.Ok();
     }
 );
 
