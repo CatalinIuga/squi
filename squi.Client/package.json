@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@radix-icons/vue": "^1.0.0",
     "@vueuse/core": "^10.7.2",
     "ag-grid-community": "^31.0.3",
     "ag-grid-vue3": "^31.0.3",

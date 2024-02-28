@@ -23,9 +23,10 @@ import {
   PlusIcon,
   RefreshCw,
   SettingsIcon,
-  SlidersHorizontal,
   XIcon,
 } from "lucide-vue-next";
+
+import ColumnsSelector from "./components/ColumnsSelector.vue";
 
 import { onMounted, ref, watch } from "vue";
 import AgGridTable from "./components/AgGridTable.vue";
@@ -34,6 +35,7 @@ import { getTables } from "./service/dataService";
 const tables = ref<Array<string>>([]);
 const limit = ref<number>(50);
 const offset = ref<number>(0);
+const filterColumns = ref<Array<string>>([]);
 const currentTable = ref<string | null>(localStorage.getItem("currentTable"));
 const openTables = ref<Array<string>>(
   JSON.parse(localStorage.getItem("openTables") || "[]")
@@ -86,6 +88,7 @@ watch(
 
 const filterTables = ref<string>("");
 const filteredTables = ref<Array<string>>(tables.value);
+
 // Filter tables
 watch(
   () => filterTables.value,
@@ -102,6 +105,21 @@ watch(
 
 // Table reference for calling exposed methods
 const tableRef = ref<InstanceType<typeof AgGridTable> | null>(null);
+
+watch(
+  () => tableRef.value?.columns,
+  (newColumns) => {
+    if (newColumns) {
+      console.log(newColumns);
+      filterColumns.value = newColumns;
+    }
+  }
+);
+
+const setFilterColumns = (columns: Array<string>) => {
+  console.log(columns);
+  filterColumns.value = columns;
+};
 
 onMounted(async () => {
   tables.value = await getTables();
@@ -203,14 +221,12 @@ onMounted(async () => {
           Filters
         </Button>
         <!-- Columns -->
-        <Button
-          class="flex items-center text-sm gap-2"
-          variant="outline"
-          size="sm"
-        >
-          <SlidersHorizontal :size="16" />
-          Columns
-        </Button>
+        <ColumnsSelector
+          v-if="tableRef"
+          :columns="tableRef.columns"
+          :filteredColumns="filterColumns"
+          :setFilteredColumns="setFilterColumns"
+        />
         <!-- Add new -->
         <Button
           @click="tableRef.addRow"

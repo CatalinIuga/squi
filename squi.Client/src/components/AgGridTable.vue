@@ -189,6 +189,13 @@ const onGridReady = (params: GridReadyEvent) => {
   gridApi.value = params.api;
 };
 
+const refreshGrid = async () => {
+  newRows.value = [];
+  valueChanges.value = [];
+
+  await getGridData(props.table, props.limit, props.offset);
+};
+
 const addRow = () => {
   const newRow: Record<string, any> = {};
   tableSchema.value?.columns.forEach((column) => {
@@ -324,13 +331,11 @@ const rowCounter = computed(() => {
   return tableSchema.value?.rowCount;
 });
 
-const refreshGrid = async () => {
-  // discardChanges();
-  newRows.value = [];
-  valueChanges.value = [];
-
-  await getGridData(props.table, props.limit, props.offset);
-};
+const columns = computed(() => {
+  return columnDefs.value
+    .filter((col) => col.field !== undefined)
+    .map((col) => col.field) as string[];
+});
 
 defineExpose({
   refreshGrid,
@@ -338,6 +343,7 @@ defineExpose({
   saveChanges,
   discardChanges,
   deleteSelectedRows,
+  columns: columns,
   changes: totalChanges,
   rowCounter,
   selectedRowsCount,
