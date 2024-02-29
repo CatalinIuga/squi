@@ -15,10 +15,6 @@ public class SQLiteProvider
     /// </summary>
     private readonly DbConnection connection = SQLiteFactory.Instance.CreateConnection();
 
-    private readonly DbDataAdapter adapter = SQLiteFactory.Instance.CreateDataAdapter();
-
-    private readonly DbCommandBuilder builder = SQLiteFactory.Instance.CreateCommandBuilder();
-
     /// <summary>
     /// The tables that should not be displayed.
     /// </summary>
@@ -89,7 +85,7 @@ public class SQLiteProvider
 
     public IDictionary<string, object?> InsertData(
         string tableName,
-        IDictionary<string, object> data
+        IDictionary<string, object?> data
     )
     {
         var dt = connection.GetSchema("Columns", new[] { null, null, tableName });
@@ -129,7 +125,7 @@ public class SQLiteProvider
 
     public IDictionary<string, object?> UpdateData(
         string tableName,
-        IDictionary<string, object> data
+        IDictionary<string, object?> data
     )
     {
         var dt = connection.GetSchema("Columns", new[] { null, null, tableName });
@@ -137,8 +133,9 @@ public class SQLiteProvider
 
         var command = connection.CreateCommand();
 
-        command.CommandText =
-            $"UPDATE {tableName} SET {string.Join(", ", columns.Select(x => $"{x} = @{x}"))} WHERE {string.Join(" AND ", columns.Select(x => $"{x} = @__initial_{x}"))} RETURNING *";
+        command.CommandText = command.CommandText =
+            $"UPDATE {tableName} SET {string.Join(", ", columns.Select(x => $"{x} = @{x}"))} WHERE {string.Join(" AND ", columns.Select(x => $"{x} IS @__initial_{x}"))} RETURNING *";
+        ;
 
         foreach (var column in columns)
         {
@@ -147,7 +144,14 @@ public class SQLiteProvider
                 command.Parameters.Add(new SQLiteParameter($"@{column}", data[column]));
                 command
                     .Parameters
-                    .Add(new SQLiteParameter($"@__initial_{column}", data[$"__initial_{column}"]));
+                    .Add(
+                        new SQLiteParameter(
+                            $"@__initial_{column}",
+                            data[$"__initial_{column}"] is null
+                                ? DBNull.Value
+                                : data[$"__initial_{column}"]
+                        )
+                    );
             }
         }
 

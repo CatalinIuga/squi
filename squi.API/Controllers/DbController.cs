@@ -54,7 +54,7 @@ public class DbController : ControllerBase
     }
 
     [HttpPost("{tableName}/data")]
-    public IActionResult InsertData(string tableName, [FromBody] IDictionary<string, object> data)
+    public IActionResult InsertData(string tableName, [FromBody] IDictionary<string, object?> data)
     {
         try
         {
@@ -68,7 +68,7 @@ public class DbController : ControllerBase
     }
 
     [HttpPut("{tableName}/data")]
-    public IActionResult UpdateData(string tableName, [FromBody] IDictionary<string, object> data)
+    public IActionResult UpdateData(string tableName, [FromBody] IDictionary<string, object?> data)
     {
         try
         {
