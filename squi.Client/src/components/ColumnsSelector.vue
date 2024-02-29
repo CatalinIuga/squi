@@ -62,6 +62,7 @@ const filterFunction = (list: any[], term: string) =>
           <Button
             variant="link"
             size="sm"
+            class="h-5"
             @click="
               toggleColumn(
                 displayedColumns.length === allColumns.length
@@ -78,9 +79,9 @@ const filterFunction = (list: any[], term: string) =>
           </Button>
         </div>
         <CommandSeparator />
-        <div class="m-2 border rounded-md">
+        <div class="m-1 border rounded-md">
           <CommandInput
-            class="w-full h-6 p-0 text-xs"
+            class="w-full h-8 p-0 text-xs"
             placeholder="Search columns"
           />
         </div>
@@ -103,6 +104,13 @@ const filterFunction = (list: any[], term: string) =>
               </CommandItem>
             </template>
           </CommandGroup>
+          <CommandSeparator />
+          <div class="flex items-center justify-evenly gap-1 m-1">
+            <Button class="h-6" variant="default" size="sm">New</Button>
+            <Button class="h-6" variant="outline" size="sm"
+              >Edit columns</Button
+            >
+          </div>
         </CommandList>
       </Command>
     </PopoverContent>

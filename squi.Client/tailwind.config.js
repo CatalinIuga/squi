@@ -81,6 +81,7 @@ module.exports = {
       },
       fontFamily: {
         menlo: ["Menlo", "monospace"],
+        inter: ["Inter", "sans-serif"],
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
