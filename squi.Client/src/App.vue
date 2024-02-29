@@ -35,7 +35,6 @@ import { getTables } from "./service/dataService";
 const tables = ref<Array<string>>([]);
 const limit = ref<number>(50);
 const offset = ref<number>(0);
-const filterColumns = ref<Array<string>>([]);
 const currentTable = ref<string | null>(localStorage.getItem("currentTable"));
 const openTables = ref<Array<string>>(
   JSON.parse(localStorage.getItem("openTables") || "[]")
@@ -105,21 +104,6 @@ watch(
 
 // Table reference for calling exposed methods
 const tableRef = ref<InstanceType<typeof AgGridTable> | null>(null);
-
-watch(
-  () => tableRef.value?.columns,
-  (newColumns) => {
-    if (newColumns) {
-      console.log(newColumns);
-      filterColumns.value = newColumns;
-    }
-  }
-);
-
-const setFilterColumns = (columns: Array<string>) => {
-  console.log(columns);
-  filterColumns.value = columns;
-};
 
 onMounted(async () => {
   tables.value = await getTables();
@@ -223,9 +207,9 @@ onMounted(async () => {
         <!-- Columns -->
         <ColumnsSelector
           v-if="tableRef"
-          :columns="tableRef.columns"
-          :filteredColumns="filterColumns"
-          :setFilteredColumns="setFilterColumns"
+          :allColumns="tableRef.allColumns"
+          :displayedColumns="tableRef.displayedColumns"
+          :toggleColumn="tableRef.toggleColumn"
         />
         <!-- Add new -->
         <Button

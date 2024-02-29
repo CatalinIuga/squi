@@ -123,6 +123,8 @@ const getGridData = async (table: string, limit: number, offset: number) => {
   newColDefs = tableSchema.value.columns.map((column) => {
     return {
       field: column.name.toString(),
+      filter: false,
+      suppressColumnsToolPanel: true,
       defaultAggFunc: "saveChanges",
       editable: column.isAutoIncrement ? false : true,
       headerClass: "font-bold text-[#64748b]",
@@ -327,23 +329,71 @@ const totalChanges = computed(() => {
   return valueChanges.value.length + newRows.value.length;
 });
 
-const rowCounter = computed(() => {
-  return tableSchema.value?.rowCount;
+const allColumns = computed(() => {
+  return columnDefs.value
+    .filter((colDef) => colDef.field !== undefined)
+    .map((colDef) => colDef.field as string);
 });
 
-const columns = computed(() => {
-  return columnDefs.value
-    .filter((col) => col.field !== undefined)
-    .map((col) => col.field) as string[];
+const displayedColumns = ref<string[]>([]);
+
+watch(
+  () => gridApi.value,
+  (newGridApi) => {
+    if (newGridApi) {
+      displayedColumns.value = newGridApi
+        .getColumns()
+        ?.filter(
+          (col) => col.isVisible() && col.getColDef().field !== undefined
+        )
+        .map((col) => col.getColDef().field as string) as string[];
+    }
+  },
+  { immediate: true, deep: true }
+);
+
+const toggleColumn = (col: string) => {
+  if (col === "__all") {
+    console.log("called!");
+
+    gridApi.value?.setColumnsVisible(gridApi.value.getColumns()!, true);
+    displayedColumns.value = allColumns.value;
+    return;
+  }
+  if (col === "__none") {
+    gridApi.value?.setColumnsVisible(
+      gridApi.value
+        .getColumns()!
+        .filter((c) => c.getColDef().field != undefined),
+      false
+    );
+    displayedColumns.value = [];
+    return;
+  }
+  const column = gridApi.value?.getColumn(col);
+  if (!column) return;
+  gridApi.value?.setColumnsVisible([column], !column?.isVisible());
+  displayedColumns.value = gridApi.value
+    ?.getColumns()
+    ?.filter((col) => col.isVisible() && col.getColDef().field !== undefined)
+    .map((col) => col.getColDef().field as string) as string[];
+};
+
+const rowCounter = computed(() => {
+  return tableSchema.value?.rowCount;
 });
 
 defineExpose({
   refreshGrid,
   addRow,
   saveChanges,
+
+  displayedColumns,
+  allColumns,
+  toggleColumn,
+
   discardChanges,
   deleteSelectedRows,
-  columns: columns,
   changes: totalChanges,
   rowCounter,
   selectedRowsCount,
