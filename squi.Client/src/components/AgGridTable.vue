@@ -43,7 +43,7 @@ const tableData = ref<Record<string, any>[]>([]);
 watch(
   [() => props.table, () => props.limit, () => props.offset],
   async ([newTable, newLimit, newOffset]: [string, number, number]) => {
-    await getGridData(newTable.toString(), newLimit, newOffset);
+    await getGridData(newTable, newLimit, newOffset);
   },
   { deep: true }
 );
@@ -387,13 +387,15 @@ defineExpose({
   refreshGrid,
   addRow,
   saveChanges,
+  discardChanges,
+  deleteSelectedRows,
 
   displayedColumns,
   allColumns,
   toggleColumn,
 
-  discardChanges,
-  deleteSelectedRows,
+  tableSchema,
+  
   changes: totalChanges,
   rowCounter,
   selectedRowsCount,
