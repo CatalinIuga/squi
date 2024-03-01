@@ -6,6 +6,14 @@ var sqliteProvider = new SQLiteProvider(connectionString);
 
 var builder = WebApplication.CreateBuilder(args);
 
+// set port to 5076
+builder
+    .WebHost
+    .ConfigureKestrel(options =>
+    {
+        options.ListenLocalhost(5076);
+    });
+
 builder.Services.AddSingleton(sqliteProvider);
 builder.Services.AddControllers();
 builder.Services.AddSwaggerGen();
@@ -23,7 +31,6 @@ app.UseCors(options =>
     options.AllowAnyMethod();
 });
 
-app.MapGet("/", () => Results.Redirect("/index.html"));
 app.MapControllers();
 
 if (app.Environment.IsDevelopment())
