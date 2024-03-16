@@ -14,10 +14,7 @@ public class SpaController : ControllerBase
         {
             Console.WriteLine(name);
         }
-        // We have the following resources:
-        // "squi.API.wwwroot.assets.index-5HaptLLQ.js",
-        // "squi.API.wwwroot.assets.index-Civxw0pt.css",
-        // "squi.API.wwwroot.index.html"
+
         var assembly = System.Reflection.Assembly.GetExecutingAssembly();
         var resourceStream = assembly.GetManifestResourceStream("squi.API.wwwroot.index.html");
 

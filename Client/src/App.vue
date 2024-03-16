@@ -22,11 +22,11 @@ import {
   ListFilter,
   PlusIcon,
   RefreshCw,
-  SettingsIcon,
   XIcon,
 } from "lucide-vue-next";
 
 import ColumnsSelector from "./components/ColumnsSelector.vue";
+import ThemeSwitcher from "./components/ThemeSwitcher.vue";
 
 import { onMounted, ref, watch } from "vue";
 import AgGridTable from "./components/AgGridTable.vue";
@@ -182,10 +182,8 @@ onMounted(async () => {
         >
           <DownloadIcon :size="16" />
         </Button>
-        <!-- Might change sthis for the theme switcher -->
-        <Button class="flex items-center gap-2" variant="outline" size="sm">
-          <SettingsIcon :size="16" />
-        </Button>
+        <!-- Theme swticher -->
+        <ThemeSwitcher />
       </div>
     </header>
 
