@@ -82,40 +82,27 @@
 }
 
 .ag-theme-quartz {
-  --background: 0 0% 100%;
-  --foreground: 240 10% 3.9%;
-
-  --card: 0 0% 100%;
-  --card-foreground: 240 10% 3.9%;
-
-  --popover: 0 0% 100%;
-  --popover-foreground: 240 10% 3.9%;
-
-  --primary: 240 5.9% 10%;
-  --primary-foreground: 0 0% 98%;
-
-  --secondary: 240 4.8% 95.9%;
-  --secondary-foreground: 240 5.9% 10%;
-
-  --muted: 210 40% 96%;
-  --muted-foreground: 240 3.8% 46.1%;
-
-  --accent: 240 4.8% 95.9%;
-  --accent-foreground: 240 5.9% 10%;
-
-  --destructive: 0 84.2% 60.2%;
-  --destructive-foreground: 0 0% 98%;
-
   --border: #e5e5e5;
   --input: 240 5.9% 90%;
   --ring: 240 5.9% 10%;
   --radius: 0.5rem;
+}
 
+.ag-theme-quartz-dark {
+  --border: #313131;
+  --input: 240 3.7% 15.9%;
+  --ring: 240 4.9% 83.9%;
+  --radius: 0.5rem;
+}
+
+.ag-theme-quartz,
+.ag-theme-quartz-dark {
   --ag-active-color: hsl(var(--accent-foreground));
   --ag-data-color: hsl(var(--foreground));
   --ag-foreground-color: hsl(var(--foreground));
   --ag-background-color: hsl(var(--background));
   --ag-secondary-foreground-color: hsl(var(--secondary-foreground));
+  --ag-header-background-color: hsl(var(--secondary));
   --ag-header-foreground-color: hsl(var(--foreground));
   --ag-tooltip-background-color: hsl(var(--popover));
   --ag-disabled-foreground-color: hsl(var(--muted-foreground));
@@ -145,27 +132,38 @@
   --ag-input-focus-box-shadow: none;
   @apply h-full w-full font-menlo;
 }
-.ag-theme-quartz .ag-layout-normal {
+.ag-theme-quartz .ag-root-wrapper,
+.ag-theme-quartz-dark .ag-root-wrapper {
+  @apply !rounded-none;
+}
+
+.ag-theme-quartz .ag-layout-normal,
+.ag-theme-quartz-dark .ag-layout-normal {
   @apply h-full w-full overflow-auto;
 }
 
-.ag-theme-quartz .ag-cell-focus {
+.ag-theme-quartz .ag-cell-focus,
+.ag-theme-quartz-dark .ag-cell-focus {
   @apply !border-2 !border-[#66afe9] !py-0 !px-1;
 }
 
-.ag-theme-quartz .ag-cell-inline-editing {
-  @apply !border-2 !border-[#66afe9]  !py-0 !px-0 rounded-none;
+.ag-theme-quartz .ag-cell-inline-editing,
+.ag-theme-quartz-dark .ag-cell-inline-editing {
+  @apply !border-2 !border-[#66afe9] !py-0 !px-0 rounded-none;
 }
 /* change the cell inline editing border to red when the input is invalid */
-.ag-theme-quartz .ag-cell-inline-editing:has(input:invalid) {
+.ag-theme-quartz .ag-cell-inline-editing:has(input:invalid),
+.ag-theme-quartz-dark .ag-cell-inline-editing:has(input:invalid) {
   @apply !border-red-500;
 }
 
-.ag-theme-quartz .ag-cell-inline-editing input {
+.ag-theme-quartz .ag-cell-inline-editing input,
+.ag-theme-quartz-dark .ag-cell-inline-editing input {
   @apply !border-none !bg-transparent !text-foreground !w-full !h-full !px-1;
 }
 
-.ag-theme-quartz .ag-header-cell-label {
+.ag-theme-quartz .ag-header-cell-label,
+.ag-theme-quartz-dark .ag-header-cell-label {
   @apply justify-between;
 }
 

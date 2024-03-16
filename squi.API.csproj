@@ -14,7 +14,7 @@
     <PublishTrimmed>true</PublishTrimmed>
     <PublishReadyToRun>true</PublishReadyToRun>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
-     <GenerateEmbeddedFilesManifest>true</GenerateEmbeddedFilesManifest>
+    <GenerateEmbeddedFilesManifest>true</GenerateEmbeddedFilesManifest>
 
   </PropertyGroup>
 

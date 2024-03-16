@@ -138,7 +138,7 @@ onMounted(async () => {
           :key="id"
           class="flex items-center gap-2"
           :class="
-            currentTable === table ? 'bg-slate-100 hover:bg-slate-100/80' : ''
+            currentTable === table ? 'bg-secondary hover:bg-secondary/80' : ''
           "
           variant="outline"
           size="sm"
@@ -163,7 +163,7 @@ onMounted(async () => {
         v-if="openTables.length !== tables.length"
         class="size-8"
         :class="
-          openTables.length !== 0 ? 'bg-slate-100 hover:bg-slate-100/80' : ''
+          openTables.length !== 0 ? 'bg-secondary hover:bg-secondary/80' : ''
         "
         @click="currentTable = null"
         variant="outline"

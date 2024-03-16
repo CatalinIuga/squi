@@ -7,6 +7,7 @@ import {
   updateTableData,
 } from "@/service/dataService";
 import { TableSchema } from "@/types/responses";
+import { useColorMode } from "@vueuse/core";
 import {
   ColDef,
   GridApi,
@@ -16,6 +17,7 @@ import {
 } from "ag-grid-community";
 import "ag-grid-community/styles/ag-grid.css";
 import "ag-grid-community/styles/ag-theme-quartz.css";
+
 import { AgGridVue } from "ag-grid-vue3";
 import { computed, onMounted, ref, watch } from "vue";
 
@@ -395,16 +397,22 @@ defineExpose({
   toggleColumn,
 
   tableSchema,
-  
+
   changes: totalChanges,
   rowCounter,
   selectedRowsCount,
 });
+
+const mode = useColorMode();
 </script>
 
 <template>
   <AgGridVue
-    class="ag-theme-quartz"
+    class="!rounded-none"
+    :class="{
+      'ag-theme-quartz': mode === 'light',
+      'ag-theme-quartz-dark': mode === 'dark',
+    }"
     @grid-ready="onGridReady"
     :rowData="rowData"
     :gridOptions="gridOptions"

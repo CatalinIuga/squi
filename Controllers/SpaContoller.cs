@@ -9,12 +9,6 @@ public class SpaController : ControllerBase
     [HttpGet("/")]
     public IActionResult Index()
     {
-        var names = System.Reflection.Assembly.GetExecutingAssembly().GetManifestResourceNames();
-        foreach (var name in names)
-        {
-            Console.WriteLine(name);
-        }
-
         var assembly = System.Reflection.Assembly.GetExecutingAssembly();
         var resourceStream = assembly.GetManifestResourceStream("squi.API.wwwroot.index.html");
 

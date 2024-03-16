@@ -17,7 +17,7 @@ const toggleColorMode = () => {
     variant="outline"
     size="sm"
   >
-    <SunIcon v-if="mode === 'dark'" :size="16" />
+    <SunIcon v-if="mode === 'light'" :size="16" />
     <MoonIcon v-else :size="16" />
   </Button>
 </template>
