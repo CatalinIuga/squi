@@ -132,7 +132,7 @@ const getGridData = async (table: string, limit: number, offset: number) => {
       suppressColumnsToolPanel: true,
       defaultAggFunc: "saveChanges",
       editable: column.isAutoIncrement ? false : true,
-      headerClass: "font-bold text-[#64748b]",
+      headerClass: "font-bold text-slate-500 dark:text-slate-300",
       cellStyle: (params) => {
         const fieldName = params.colDef.field;
         const initialValue = params.data["__initial_" + fieldName];
@@ -142,10 +142,7 @@ const getGridData = async (table: string, limit: number, offset: number) => {
         }
         return { backgroundColor: "transparent", color: "inherit" };
       },
-      cellClass:
-        "py-[1.75px] " +
-        (column.isAutoIncrement ? "focus:cursor-not-allowed" : ""),
-
+      cellClass: column.isAutoIncrement ? "focus:cursor-not-allowed" : "",
       suppressMovable: true,
     };
   });
@@ -155,7 +152,7 @@ const getGridData = async (table: string, limit: number, offset: number) => {
     sortable: false,
     filter: false,
     width: 30,
-    cellClass: "flex",
+    cellClass: "!flex !px-1 !pt-0",
     resizable: false,
     suppressAutoSize: true,
     suppressNavigable: true,

@@ -1,3 +1,3 @@
 # SQUI - SQL database client
 
-SQUI is a SQL database client written using .Net Core 7 and Vue3.
+SQUI is a SQL database GUI written using .Net Core 7 and Vue3.

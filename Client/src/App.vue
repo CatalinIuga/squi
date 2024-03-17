@@ -35,10 +35,12 @@ import { getTables } from "./service/dataService";
 const tables = ref<Array<string>>([]);
 const limit = ref<number>(50);
 const offset = ref<number>(0);
+
 const currentTable = ref<string | null>(localStorage.getItem("currentTable"));
 const openTables = ref<Array<string>>(
   JSON.parse(localStorage.getItem("openTables") || "[]")
 );
+const showFilters = ref(false);
 
 // check if offset or limit go below 0
 watch(
@@ -198,6 +200,7 @@ onMounted(async () => {
           class="flex items-center text-sm gap-2"
           variant="outline"
           size="sm"
+          @click="showFilters = !showFilters"
         >
           <ListFilter :size="16" />
           Filters
@@ -307,6 +310,13 @@ onMounted(async () => {
           </Button>
         </div>
       </section>
+
+      <!-- Filters menu -->
+      <section
+        v-if="tableRef && showFilters"
+        class="flex items-center gap-2 px-4 py-3 border-b-[1px]"
+      ></section>
+
       <!-- Table -->
       <output class="h-full overflow-auto pb-12">
         <AgGridTable
