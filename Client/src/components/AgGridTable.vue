@@ -377,12 +377,39 @@ const rowCounter = computed(() => {
   return tableSchema.value?.rowCount;
 });
 
+const download = () => {
+  let data: Array<any> = [];
+  gridApi.value?.forEachNode((node) => {
+    data.push(
+      // dont include the __initial_ fields, isnewRow and the isNewROw
+      Object.keys(node.data).reduce((acc, key) => {
+        if (!key.includes("__initial") && key !== "isnewRow") {
+          Object.assign(acc, { [key]: node.data[key] });
+        }
+        return acc;
+      }, {})
+    );
+  });
+  const blob = new Blob([JSON.stringify(data, null, 4)], {
+    type: "application/json",
+  });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `${props.table}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  a.remove();
+};
+
 defineExpose({
   refreshGrid,
   addRow,
   saveChanges,
   discardChanges,
   deleteSelectedRows,
+
+  download,
 
   displayedColumns,
   allColumns,

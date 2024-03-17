@@ -181,6 +181,7 @@ onMounted(async () => {
           class="flex items-center gap-1 size-8"
           variant="outline"
           size="icon"
+          @click="tableRef?.download()"
         >
           <DownloadIcon :size="16" />
         </Button>
