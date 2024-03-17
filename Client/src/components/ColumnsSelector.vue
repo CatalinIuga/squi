@@ -15,22 +15,14 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { CheckIcon, SlidersHorizontal } from "lucide-vue-next";
-import { PropType } from "vue";
 
-const { allColumns, displayedColumns, toggleColumn } = defineProps({
-  allColumns: {
-    type: Array as PropType<string[]>,
-    required: true,
-  },
-  displayedColumns: {
-    type: Array as PropType<string[]>,
-    required: true,
-  },
-  toggleColumn: {
-    type: Function as PropType<(col: string) => void>,
-    required: true,
-  },
-});
+interface Props {
+  allColumns: string[];
+  displayedColumns: string[] | undefined;
+  toggleColumn: (col: string) => void;
+}
+
+const { allColumns, displayedColumns, toggleColumn } = defineProps<Props>();
 
 const filterFunction = (list: any[], term: string) =>
   list.filter((i) => i.toLowerCase()?.includes(term.toLowerCase()));
@@ -48,7 +40,7 @@ const filterFunction = (list: any[], term: string) =>
         Columns
         <!-- icon when not all columns are selected! -->
         <div
-          v-if="displayedColumns.length < allColumns.length"
+          v-if="displayedColumns && displayedColumns.length < allColumns.length"
           class="absolute top-0 right-0 -mt-1 -mr-1 flex items-center justify-center w-4 h-4 bg-primary text-primary-foreground rounded-full"
         >
           !
@@ -56,7 +48,11 @@ const filterFunction = (list: any[], term: string) =>
       </Button>
     </PopoverTrigger>
     <PopoverContent class="w-[200px] p-0">
-      <Command :multiple="true" :filter-function="filterFunction">
+      <Command
+        v-if="displayedColumns"
+        :multiple="true"
+        :filter-function="filterFunction"
+      >
         <div class="px-2 py-2 flex items-center justify-between">
           <h3 class="text-sm font-semibold">Toggle columns</h3>
           <Button
