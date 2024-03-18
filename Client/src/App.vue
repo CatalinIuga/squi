@@ -30,6 +30,7 @@ import ThemeSwitcher from "./components/ThemeSwitcher.vue";
 
 import { onMounted, ref, watch } from "vue";
 import AgGridTable from "./components/AgGridTable.vue";
+import FilteringSection from "./components/FilteringSection.vue";
 import { getTables } from "./service/dataService";
 
 const tables = ref<Array<string>>([]);
@@ -313,10 +314,10 @@ onMounted(async () => {
       </section>
 
       <!-- Filters menu -->
-      <section
+      <FilteringSection
         v-if="tableRef && showFilters"
-        class="flex items-center gap-2 px-4 py-3 border-b-[1px]"
-      ></section>
+        :columns="tableRef.allColumns"
+      />
 
       <!-- Table -->
       <output class="h-full overflow-auto pb-12">
