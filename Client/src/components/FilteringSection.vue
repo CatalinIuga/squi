@@ -82,7 +82,9 @@ const filters = ref<Filter[]>([]);
 </script>
 
 <template>
-  <section class="flex justify-between gap-2 px-4 py-2 border-b-[1px]">
+  <section
+    class="flex justify-between gap-2 px-4 py-2 border-b-[1px] max-h-40 overflow-y-auto"
+  >
     <div v-if="filters.length === 0" class="flex items-center gap-1">
       <InfoIcon :size="16" />
       <p class="text-sm">Use the filters to narrow down the results</p>
@@ -94,8 +96,8 @@ const filters = ref<Filter[]>([]);
         class="flex items-center gap-2"
       >
         <div class="rounded-md bg-secondary px-2 py-1">where</div>
-        <Select class="w-[200px]" v-model:model-value="filter.column">
-          <SelectTrigger>
+        <Select v-model:model-value="filter.column">
+          <SelectTrigger class="w-[200px]">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -111,8 +113,8 @@ const filters = ref<Filter[]>([]);
           </SelectContent>
         </Select>
 
-        <Select class="w-[200px]" v-model:model-value="filter.operator">
-          <SelectTrigger>
+        <Select v-model:model-value="filter.operator">
+          <SelectTrigger class="bg-secondary w-[200px]">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -137,7 +139,7 @@ const filters = ref<Filter[]>([]);
       </div>
     </div>
 
-    <div class="flex justify-between items-center">
+    <div class="flex justify-between items-start">
       <div class="flex items-center gap-1">
         <Button
           class="flex items-center text-sm gap-2"
