@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -8,7 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { InfoIcon } from "lucide-vue-next";
+import { InfoIcon, XIcon } from "lucide-vue-next";
 import { ref } from "vue";
 
 interface Props {
@@ -128,12 +129,22 @@ const filters = ref<Filter[]>([]);
           </SelectContent>
         </Select>
 
-        <input
+        <Input
           v-if="operations[filter.operator].hasValue"
+          placeholder="Value"
           v-model="filter.value"
-          class="w-[200px] rounded-md border-[1px] border-gray-300 px-2 py-1"
+          class="w-[200px] rounded-md px-2 py-1"
           type="text"
         />
+
+        <Button
+          class="px-2"
+          variant="ghost"
+          size="sm"
+          @click="filters.splice(index, 1)"
+        >
+          <XIcon class="size-4 text-red-500" />
+        </Button>
       </div>
     </div>
 
