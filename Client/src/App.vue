@@ -47,10 +47,11 @@ const showFilters = ref(false);
 watch(
   [() => limit.value, () => offset.value],
   ([newLimit, newOffset]) => {
+    console.log(newLimit, newOffset);
     if (newLimit < 1) {
       limit.value = 1;
     }
-    if (newOffset < 0) {
+    if (newOffset < 0 || !newOffset) {
       offset.value = 0;
     }
   },
@@ -276,7 +277,13 @@ onMounted(async () => {
           <TooltipProvider :delay-duration="300">
             <Tooltip>
               <TooltipTrigger>
-                <Input type="number" min="1" class="w-20 h-8" v-model="limit" />
+                <Input
+                  type="number"
+                  min="1"
+                  placeholder="50"
+                  class="w-14 no-number-input text-center h-8"
+                  v-model="limit"
+                />
               </TooltipTrigger>
               <TooltipContent class="bg-background border text-foreground">
                 LIMIT
@@ -289,9 +296,10 @@ onMounted(async () => {
             <Tooltip>
               <TooltipTrigger>
                 <Input
-                  min="0"
+                  :min="0"
+                  placeholder="0"
                   type="number"
-                  class="w-20 h-8"
+                  class="w-14 no-number-input h-8"
                   v-model="offset"
                 />
               </TooltipTrigger>

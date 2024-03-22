@@ -82,9 +82,7 @@ const filters = ref<Filter[]>([]);
 </script>
 
 <template>
-  <section
-    class="flex justify-between gap-2 px-4 py-2 border-b-[1px] max-h-40 overflow-y-auto"
-  >
+  <section class="flex justify-between gap-2 px-4 py-2 border-b-[1px]">
     <div v-if="filters.length === 0" class="flex items-center gap-1">
       <InfoIcon :size="16" />
       <p class="text-sm">Use the filters to narrow down the results</p>

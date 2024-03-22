@@ -199,3 +199,10 @@
 .smol-bar::-webkit-scrollbar-thumb:hover {
   @apply bg-slate-200;
 }
+
+.no-number-input::-webkit-inner-spin-button,
+.no-number-input::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  -moz-appearance: textfield;
+  margin: 0;
+}
