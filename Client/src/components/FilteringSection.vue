@@ -1,18 +1,17 @@
 <script setup lang="ts">
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { InfoIcon, XIcon } from "lucide-vue-next";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
+import { ChevronDownIcon, InfoIcon, XIcon } from "lucide-vue-next";
 import { ref } from "vue";
 
 interface Props {
+  show: boolean;
   columns: string[];
 }
 
@@ -21,53 +20,53 @@ defineProps<Props>();
 const operations = {
   eq: {
     label: "equals",
-    value: "eq",
+    value: "=",
     hasValue: true,
   },
   neq: {
     label: "not equals",
-    value: "neq",
+    value: "<>",
     hasValue: true,
   },
   gt: {
-    label: "greater than",
-    value: "gt",
+    label: "greater",
+    value: ">",
     hasValue: true,
   },
   gte: {
-    label: "greater than or equals",
-    value: "gte",
+    label: "greater or equals",
+    value: ">=",
     hasValue: true,
   },
   lt: {
-    label: "less than",
-    value: "lt",
+    label: "less",
+    value: "<",
     hasValue: true,
   },
   lte: {
-    label: "less than or equals",
-    value: "lte",
+    label: "less or equals",
+    value: "<=",
     hasValue: true,
   },
   isNull: {
     label: "is null",
-    value: "isNull",
+    value: "IS NULL",
     hasValue: false,
   },
   isNotNull: {
     label: "is not null",
-    value: "isNotNull",
+    value: "IS NOT NULL",
     hasValue: false,
   },
 
   like: {
     label: "like",
-    value: "like",
+    value: "LIKE",
     hasValue: true,
   },
   notLike: {
     label: "not like",
-    value: "notLike",
+    value: "NOT LIKE",
     hasValue: true,
   },
 };
@@ -80,10 +79,15 @@ type Filter = {
 
 // this might need to go to a global store
 const filters = ref<Filter[]>([]);
+
+defineExpose({ filters });
 </script>
 
 <template>
-  <section class="flex justify-between gap-2 px-4 py-2 border-b-[1px]">
+  <section
+    v-if="show"
+    class="flex justify-between gap-2 px-4 py-2 border-b-[1px]"
+  >
     <div v-if="filters.length === 0" class="flex items-center gap-1">
       <InfoIcon :size="16" />
       <p class="text-sm">Use the filters to narrow down the results</p>
@@ -94,40 +98,52 @@ const filters = ref<Filter[]>([]);
         :key="index"
         class="flex items-center gap-2"
       >
-        <div class="rounded-md bg-secondary px-2 py-1">where</div>
-        <Select v-model:model-value="filter.column">
-          <SelectTrigger class="w-[200px]">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectGroup label="Columns">
-              <SelectItem
-                v-for="column in columns"
-                :key="column"
-                :value="column"
-              >
-                {{ column }}
-              </SelectItem>
-            </SelectGroup>
-          </SelectContent>
-        </Select>
+        <div class="rounded-md px-4 py-2 border">where</div>
+        <DropdownMenu>
+          <DropdownMenuTrigger as-child>
+            <Button
+              class="flex items-center w-40 justify-between px-2"
+              variant="outline"
+            >
+              {{ filter.column }}
+              <ChevronDownIcon class="size-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent class="w-56">
+            <DropdownMenuItem
+              v-for="column in columns"
+              :key="column"
+              @click="filter.column = column"
+            >
+              {{ column }}
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
 
-        <Select v-model:model-value="filter.operator">
-          <SelectTrigger class="bg-secondary w-[200px]">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectGroup label="Operations">
-              <SelectItem
-                v-for="(operation, key) in operations"
-                :key="key"
-                :value="key"
-              >
-                {{ operation.label }}
-              </SelectItem>
-            </SelectGroup>
-          </SelectContent>
-        </Select>
+        <DropdownMenu>
+          <DropdownMenuTrigger as-child>
+            <Button
+              class="flex items-center w-40 justify-between px-2"
+              variant="outline"
+            >
+              {{ operations[filter.operator].label }}
+              <ChevronDownIcon class="size-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent class="w-56">
+            <DropdownMenuItem
+              class="flex justify-between items-center"
+              v-for="(operation, key) in operations"
+              :key="key"
+              @click="filter.operator = key"
+            >
+              {{ operation.label }}
+              <span class="bg-secondary shadow-sm text-xs rounded-md py-1 px-2">
+                {{ operation.value }}
+              </span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
 
         <Input
           v-if="operations[filter.operator].hasValue"

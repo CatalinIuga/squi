@@ -84,6 +84,8 @@ watch(
   (newTable) => {
     if (newTable) {
       addTable(newTable);
+      // reset filters
+      filtersRef!.value!.filters = [];
     }
     localStorage.setItem("currentTable", newTable || "");
   }
@@ -108,6 +110,8 @@ watch(
 
 // Table reference for calling exposed methods
 const tableRef = ref<InstanceType<typeof AgGridTable> | null>(null);
+// Filtering reference for calling exposed methods
+const filtersRef = ref<InstanceType<typeof FilteringSection> | null>(null);
 
 onMounted(async () => {
   tables.value = await getTables();
@@ -200,13 +204,19 @@ onMounted(async () => {
       >
         <!-- Filters -->
         <Button
-          class="flex items-center text-sm gap-2"
+          class="relative flex items-center text-sm gap-2"
           variant="outline"
           size="sm"
           @click="showFilters = !showFilters"
         >
           <ListFilter :size="16" />
           Filters
+          <div
+            v-if="filtersRef && filtersRef.filters.length > 0"
+            class="absolute top-0 right-0 -mt-1 -mr-1 flex items-center justify-center w-4 h-4 bg-primary text-primary-foreground rounded-full"
+          >
+            !
+          </div>
         </Button>
         <!-- Columns -->
         <ColumnsSelector
@@ -262,13 +272,14 @@ onMounted(async () => {
 
         <div class="ml-auto flex items-center gap-2">
           <!-- No. of rows -->
-          <div class="">{{ tableRef.rowCounter }} rows</div>
+          <div class="text-sm">{{ tableRef.rowCounter }} rows</div>
           <!-- Prev -->
           <Button
             class="flex items-center size-8 gap-1"
             variant="ghost"
             size="icon"
             @click="offset -= limit"
+            :disabled="offset < 1"
           >
             <ChevronLeftIcon :size="24" />
           </Button>
@@ -323,8 +334,10 @@ onMounted(async () => {
 
       <!-- Filters menu -->
       <FilteringSection
-        v-if="tableRef && showFilters"
-        :columns="tableRef.allColumns"
+        v-if="tableRef"
+        :show="showFilters"
+        :columns="tableRef?.allColumns"
+        ref="filtersRef"
       />
 
       <!-- Table -->
