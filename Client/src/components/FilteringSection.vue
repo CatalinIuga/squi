@@ -109,14 +109,16 @@ defineExpose({ filters });
               <ChevronDownIcon class="size-4" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent class="w-56">
-            <DropdownMenuItem
-              v-for="column in columns"
-              :key="column"
-              @click="filter.column = column"
-            >
-              {{ column }}
-            </DropdownMenuItem>
+          <DropdownMenuContent>
+            <div class="w-52 max-h-96 normal-scrollbar overflow-y-auto">
+              <DropdownMenuItem
+                v-for="column in columns"
+                :key="column"
+                @click="filter.column = column"
+              >
+                {{ column }}
+              </DropdownMenuItem>
+            </div>
           </DropdownMenuContent>
         </DropdownMenu>
 

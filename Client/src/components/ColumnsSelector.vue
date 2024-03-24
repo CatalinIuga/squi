@@ -81,7 +81,7 @@ const filterFunction = (list: any[], term: string) =>
             placeholder="Search columns"
           />
         </div>
-        <CommandList :align="'start'">
+        <CommandList class="normal-scrollbar" :align="'start'">
           <CommandEmpty>No columns found</CommandEmpty>
           <CommandGroup>
             <template v-for="col in allColumns" :key="col">

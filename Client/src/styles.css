@@ -72,6 +72,7 @@
   * {
     @apply border-border;
   }
+
   body {
     @apply bg-background text-foreground font-inter;
   }
@@ -198,6 +199,21 @@
 
 .smol-bar::-webkit-scrollbar-thumb:hover {
   @apply bg-slate-200;
+}
+
+.normal-scrollbar::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+.normal-scrollbar::-webkit-scrollbar-track {
+  margin-left: 5px;
+  margin-right: 5px;
+  margin-bottom: 5px;
+}
+
+.normal-scrollbar::-webkit-scrollbar-thumb {
+  @apply bg-secondary-foreground rounded-md;
 }
 
 .no-number-input::-webkit-inner-spin-button,
