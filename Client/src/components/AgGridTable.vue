@@ -30,6 +30,10 @@ const props = defineProps({
     type: Number,
     required: true,
   },
+  filters: {
+    type: Array<string>,
+    required: true,
+  },
   table: {
     type: String,
     required: true,
@@ -45,9 +49,19 @@ const tableData = ref<Record<string, any>[]>([]);
  * Watch over the table prop and repopulate the grid when it changes
  */
 watch(
-  [() => props.table, () => props.limit, () => props.offset],
-  async ([newTable, newLimit, newOffset]: [string, number, number]) => {
-    await getGridData(newTable, newLimit, newOffset);
+  [
+    () => props.table,
+    () => props.filters,
+    () => props.limit,
+    () => props.offset,
+  ],
+  async ([newTable, newFilters, newLimit, newOffset]: [
+    string,
+    string[],
+    number,
+    number
+  ]) => {
+    await getGridData(newTable, newFilters, newLimit, newOffset);
   },
   { deep: true }
 );
@@ -115,7 +129,12 @@ const gridOptions: GridOptions = {
   suppressRowClickSelection: true,
 };
 
-const getGridData = async (table: string, limit: number, offset: number) => {
+const getGridData = async (
+  table: string,
+  filters: string[],
+  limit: number,
+  offset: number
+) => {
   loading.value = true;
 
   // i kinnda like this
@@ -166,7 +185,7 @@ const getGridData = async (table: string, limit: number, offset: number) => {
   if (!offset) offset = 0;
   if (!limit) limit = 50;
 
-  tableData.value = await getTableData(table, limit, offset);
+  tableData.value = await getTableData(table, filters, limit, offset);
 
   rowData.value = tableData.value.map((row: any) => {
     const newRow: Record<string, any> = {};
@@ -182,7 +201,7 @@ const getGridData = async (table: string, limit: number, offset: number) => {
 };
 
 onMounted(async () => {
-  await getGridData(props.table, props.limit, props.offset);
+  await getGridData(props.table, props.filters, props.limit, props.offset);
 });
 
 const valueChanges = ref<
@@ -202,7 +221,7 @@ const refreshGrid = async () => {
   newRows.value = [];
   valueChanges.value = [];
 
-  await getGridData(props.table, props.limit, props.offset);
+  await getGridData(props.table, props.filters, props.limit, props.offset);
 };
 
 const addRow = () => {

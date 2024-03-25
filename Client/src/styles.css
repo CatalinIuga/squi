@@ -201,18 +201,18 @@
   @apply bg-slate-200;
 }
 
-.normal-scrollbar::-webkit-scrollbar {
+::-webkit-scrollbar {
   width: 5px;
   height: 5px;
 }
 
-.normal-scrollbar::-webkit-scrollbar-track {
+::-webkit-scrollbar-track {
   margin-left: 5px;
   margin-right: 5px;
   margin-bottom: 5px;
 }
 
-.normal-scrollbar::-webkit-scrollbar-thumb {
+::-webkit-scrollbar-thumb {
   @apply bg-secondary-foreground rounded-md;
 }
 

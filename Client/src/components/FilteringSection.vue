@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { ChevronDownIcon, InfoIcon, XIcon } from "lucide-vue-next";
-import { ref } from "vue";
+import { ref, watch } from "vue";
 
 interface Props {
   show: boolean;
@@ -80,7 +80,24 @@ type Filter = {
 // this might need to go to a global store
 const filters = ref<Filter[]>([]);
 
-defineExpose({ filters });
+const filtersDict = ref<string[]>([]);
+
+watch(
+  filters.value,
+  (value) => {
+    filtersDict.value = value.map(
+      (filter) =>
+        `${filter.column} ${operations[filter.operator].value} ${
+          operations[filter.operator].hasValue ? `'${filter.value}'` : ""
+        }`
+    );
+
+    console.log(filtersDict.value);
+  },
+  { deep: true }
+);
+
+defineExpose({ filters, filtersDict });
 </script>
 
 <template>
@@ -110,7 +127,7 @@ defineExpose({ filters });
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent>
-            <div class="w-52 max-h-96 normal-scrollbar overflow-y-auto">
+            <div class="w-52 max-h-64 normal-scrollbar overflow-y-auto">
               <DropdownMenuItem
                 v-for="column in columns"
                 :key="column"

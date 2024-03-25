@@ -345,6 +345,7 @@ onMounted(async () => {
         <AgGridTable
           :limit="limit"
           :offset="offset"
+          :filters="filtersRef?.filtersDict || []"
           :table="currentTable"
           ref="tableRef"
         />

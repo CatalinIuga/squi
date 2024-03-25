@@ -16,10 +16,14 @@ export const getTableSchema = async (tableName: string) => {
 
 export const getTableData = async (
   tableName: string,
+  filters: string[] = [],
   limit: number = 50,
   offset: number = 0
 ) => {
   const url = new URL(`${baseURI}/tables/${tableName}/data`);
+  filters.forEach((filter) => {
+    url.searchParams.append("filter", filter);
+  });
   url.searchParams.append("limit", limit.toString());
   url.searchParams.append("offset", offset.toString());
   const response = await fetch(url);

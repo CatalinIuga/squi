@@ -33,10 +33,11 @@ public class DbController : ControllerBase
     public ActionResult<IEnumerable<IDictionary<string, object>>> GetData(
         string tableName,
         [FromQuery] int limit = 50,
-        [FromQuery] int offset = 0
+        [FromQuery] int offset = 0,
+        [FromQuery] string[] filter = default!
     )
     {
-        var data = _sqliteProvider.GetData(tableName, limit, offset);
+        var data = _sqliteProvider.GetData(tableName, filter, limit, offset);
         var aux = data.AsEnumerable()
             .Select(
                 row =>
