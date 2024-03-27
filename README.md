@@ -35,6 +35,7 @@ dotnet run -- <database>
 - [x] Filter data using different conditions/limits/offests
 - [x] Add, update and delete rows
 - [x] Export data in JSON format
+- [x] Has darkmode 
 
 ## Roadmap
 
