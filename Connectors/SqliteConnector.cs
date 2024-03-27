@@ -59,7 +59,7 @@ public class SQLiteProvider
             $"SELECT * FROM {tableName} {(filters.Length > 0
                 ? $"WHERE {string.Join(" AND ", filters.Select(x => $"{x}"))}"
                 : string.Empty)} LIMIT {limit} OFFSET {offset}";
-        Console.WriteLine(command.CommandText);
+
         var reader = command.ExecuteReader();
         var table = new DataTable();
         table.Load(reader);

@@ -6,7 +6,6 @@ var sqliteProvider = new SQLiteProvider(connectionString);
 
 var builder = WebApplication.CreateBuilder(args);
 
-// set port to 5076
 builder
     .WebHost
     .ConfigureKestrel(options =>
@@ -39,7 +38,6 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "squi.API v1"));
 }
 
-// close the db connection when the app stops
 app.Lifetime.ApplicationStopping.Register(sqliteProvider.Close);
 
 app.Run();

@@ -10,7 +10,7 @@ public class SpaController : ControllerBase
     public IActionResult Index()
     {
         var assembly = System.Reflection.Assembly.GetExecutingAssembly();
-        var resourceStream = assembly.GetManifestResourceStream("squi.API.wwwroot.index.html");
+        var resourceStream = assembly.GetManifestResourceStream("squi.wwwroot.index.html");
 
         if (resourceStream != null)
         {
@@ -28,7 +28,7 @@ public class SpaController : ControllerBase
     public IActionResult Assets(string path)
     {
         var assembly = System.Reflection.Assembly.GetExecutingAssembly();
-        var resourceStream = assembly.GetManifestResourceStream($"squi.API.wwwroot.assets.{path}");
+        var resourceStream = assembly.GetManifestResourceStream($"squi.wwwroot.assets.{path}");
 
         if (resourceStream != null)
         {
