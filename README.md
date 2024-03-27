@@ -1,4 +1,4 @@
-# SQUI - SQL database client
+# SQUI - SQL database GUI
 
 SQUI is a SQL database GUI written using .Net Core 7 and Vue3. Currently it supports only SQLite databases, but support for other databases is planned.
 
