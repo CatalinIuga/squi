@@ -1,6 +1,13 @@
+using System.Net;
 using Squi.Connectors;
 
 var connectionString = args[0];
+
+if (string.IsNullOrEmpty(connectionString))
+{
+    Console.WriteLine("Please provide a connection string to a SQLite database.");
+    return;
+}
 
 var sqliteProvider = new SQLiteProvider(connectionString);
 
