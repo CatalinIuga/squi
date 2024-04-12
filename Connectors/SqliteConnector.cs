@@ -52,14 +52,16 @@ public class SQLiteProvider
     /// Gets the data from a table.
     /// </summary>
     /// <param name="tableName">The name of the table.</param>
-    public DataTable GetData(string tableName, string[] filters, int limit, int offset)
+    public DataTable GetData(string tableName, string[]? filters, int limit, int offset)
     {
         var command = connection.CreateCommand();
+        Console.WriteLine(tableName + filters + limit + offset);
         command.CommandText =
-            $"SELECT * FROM {tableName} {(filters.Length > 0
+            $"SELECT * FROM {tableName} {(
+            filters is not null && filters.Length > 0
                 ? $"WHERE {string.Join(" AND ", filters.Select(x => $"{x}"))}"
-                : string.Empty)} LIMIT {limit} OFFSET {offset}";
-
+                : string.Empty
+            )} LIMIT {limit} OFFSET {offset}";
         var reader = command.ExecuteReader();
         var table = new DataTable();
         table.Load(reader);

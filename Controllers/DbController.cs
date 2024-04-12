@@ -34,10 +34,11 @@ public class DbController : ControllerBase
         string tableName,
         [FromQuery] int limit = 50,
         [FromQuery] int offset = 0,
-        [FromQuery] string[] filter = default!
+        [FromQuery] string[]? filter = null
     )
     {
         var data = _sqliteProvider.GetData(tableName, filter, limit, offset);
+        Console.WriteLine(data.Rows.Count);
         var aux = data.AsEnumerable()
             .Select(
                 row =>
@@ -50,7 +51,6 @@ public class DbController : ControllerBase
                         )
             )
             .ToArray();
-
         return Ok(aux);
     }
 

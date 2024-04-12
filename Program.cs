@@ -1,4 +1,3 @@
-using System.Net;
 using Squi.Connectors;
 
 var connectionString = args[0];
@@ -6,12 +5,13 @@ var connectionString = args[0];
 if (string.IsNullOrEmpty(connectionString))
 {
     Console.WriteLine("Please provide a connection string to a SQLite database.");
-    return;
+    Environment.Exit(1);
 }
 
 var sqliteProvider = new SQLiteProvider(connectionString);
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Logging.ClearProviders(); 
 
 builder
     .WebHost
@@ -44,6 +44,13 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "squi.API v1"));
 }
+
+// Log the connection string
+Console.ForegroundColor = ConsoleColor.DarkBlue;
+Console.Write("Running on: ");
+Console.ForegroundColor = ConsoleColor.DarkGreen;
+Console.WriteLine("http://localhost:5076");
+Console.ResetColor();
 
 app.Lifetime.ApplicationStopping.Register(sqliteProvider.Close);
 
