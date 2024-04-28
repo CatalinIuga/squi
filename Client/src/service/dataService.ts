@@ -1,5 +1,7 @@
 import { ApiResponse, TableSchema } from "../types/responses";
 
+// TODO: Clean this stuff up, could also try to use a vite proxy
+
 const baseURI = import.meta.env.VITE_BASE_URI;
 
 export const getTables = async () => {

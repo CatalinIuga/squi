@@ -1,4 +1,6 @@
 <script setup lang="ts">
+// TODO: Split into components
+
 import { Button } from "@/components/ui/button";
 import {
   Card,

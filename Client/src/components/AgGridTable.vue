@@ -1,4 +1,9 @@
 <script setup lang="ts">
+// TOOD:
+// - Split this into multiple components
+// - Implement a sepparate AG Grid utils functions, with sending the ag grid api as a parameter
+// - Also move the data loading from a shared store
+
 import {
   deleteTableData,
   getTableData,

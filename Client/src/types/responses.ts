@@ -1,3 +1,5 @@
+// TOOD: update this to include relationships
+
 export type ColumnSchema = {
   name: string;
   type: string;
