@@ -5,6 +5,8 @@ using Squi.Models;
 
 namespace Squi.Connectors;
 
+// TODO: Swap to Dapper or something cause i cant get this reference to work
+
 /// <summary>
 /// This class is used to connect to a SQLite database.
 /// </summary>

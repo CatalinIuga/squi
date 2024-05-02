@@ -1,19 +1,16 @@
 using Squi.Connectors;
 
-// TODO: Add proper CLI parsing
-var connectionString = args[0];
-
-// TODO: Add DI container based on the args
-if (string.IsNullOrEmpty(connectionString))
+if (args.Length != 1)
 {
-    Console.WriteLine("Please provide a connection string to a SQLite database.");
-    Environment.Exit(1);
+    Console.WriteLine("Usage: squi <connectionString>");
+    return;
 }
 
 // TODO: Swap for a proper DI container
-var sqliteProvider = new SQLiteProvider(connectionString);
+var sqliteProvider = new SQLiteProvider(args[0]);
 
 var builder = WebApplication.CreateBuilder(args);
+
 builder.Logging.ClearProviders();
 
 // TODO: Add a proper configuration - this warns for some reason
@@ -26,16 +23,15 @@ builder
 
 // TODO: Add a proper DI container
 builder.Services.AddSingleton(sqliteProvider);
-
 builder.Services.AddControllers();
 builder.Services.AddSwaggerGen();
-
 builder.Services.AddCors();
 
 // TODO: is this needed?
 builder.Services.AddDirectoryBrowser();
 
 var app = builder.Build();
+
 app.UseStaticFiles();
 
 // TODO: Add a middleware to handle exceptions & actual cors policy
