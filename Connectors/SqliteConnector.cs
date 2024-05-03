@@ -1,211 +1,98 @@
-using System.Data;
-using System.Data.Common;
 using System.Data.SQLite;
-using Squi.Models;
+using Dapper;
+using squi.Models;
 
-namespace Squi.Connectors;
+namespace squi.Connectors;
 
 // TODO: Swap to Dapper or something cause i cant get this reference to work
 
 /// <summary>
 /// This class is used to connect to a SQLite database.
 /// </summary>
-public class SQLiteProvider
+public class SQLiteConnector : IConnector
 {
-    /// <summary>
-    /// The connection to the database.
-    /// </summary>
-    private readonly DbConnection connection = SQLiteFactory.Instance.CreateConnection();
+    public string ConnectionString { get; init; }
 
-    /// <summary>
-    /// The tables that should not be displayed.
-    /// </summary>
     public List<string> PrivateTables { get; } =
         new List<string> { "sqlite_sequence", "sqlite_stat1", };
 
-    /// <summary>
-    /// Initializes a new instance of the <see cref="SQLiteProvider"/> class.
-    /// </summary>
-    public SQLiteProvider(string path)
+    public SQLiteConnection Connection { get; set; } = null!;
+
+    public SQLiteConnector(string connectionString)
     {
-        if (!File.Exists(path))
+        ConnectionString = $"Data Source={connectionString}";
+    }
+
+    public void Connect()
+    {
+        try
         {
-            Console.WriteLine("Database file does not exist.");
-            return;
+            Connection = new SQLiteConnection(ConnectionString);
+            Connection.Open();
         }
-        connection.ConnectionString = $"Data Source={path}";
-        connection.Open();
-    }
-
-    /// <summary>
-    /// Gets the schema of a table.
-    /// </summary>
-    /// <param name="tableName">The name of the table.</param>
-    public TableSchema GetSchema(string tableName)
-    {
-        var schema = connection.GetSchema("Columns", new[] { null, null, tableName });
-        var cmd = connection.CreateCommand();
-        cmd.CommandText = $"SELECT COUNT(*) FROM {tableName}";
-        var rowCount = cmd.ExecuteScalar();
-        return new TableSchema(schema, rowCount is null ? 0 : Convert.ToInt32(rowCount));
-    }
-
-    /// <summary>
-    /// Gets the data from a table.
-    /// </summary>
-    /// <param name="tableName">The name of the table.</param>
-    public DataTable GetData(string tableName, string[]? filters, int limit, int offset)
-    {
-        var command = connection.CreateCommand();
-        Console.WriteLine(tableName + filters + limit + offset);
-        command.CommandText =
-            $"SELECT * FROM {tableName} {(
-            filters is not null && filters.Length > 0
-                ? $"WHERE {string.Join(" AND ", filters.Select(x => $"{x}"))}"
-                : string.Empty
-            )} LIMIT {limit} OFFSET {offset}";
-        var reader = command.ExecuteReader();
-        var table = new DataTable();
-        table.Load(reader);
-
-        return table;
-    }
-
-    /// <summary>
-    /// Gets the names of the tables in the database.
-    /// </summary>
-    public string[] GetTables()
-    {
-        if (connection is null)
+        catch (Exception e)
         {
-            throw new Exception("Connection is null");
+            Console.WriteLine(e.Message);
+            Environment.Exit(1);
         }
-
-        var schema = connection.GetSchema("Tables");
-
-        return schema
-            .Rows
-            .Cast<DataRow>()
-            .Select(x => x["TABLE_NAME"].ToString() ?? string.Empty)
-            .Where(x => !PrivateTables.Contains(x))
-            .ToArray();
     }
 
-    public IDictionary<string, object?> InsertData(
+    public void Disconnect()
+    {
+        Connection.Close();
+    }
+
+    public Task<IEnumerable<string>> GetTableNames()
+    {
+        var sql = PrivateTables.Aggregate(
+            "SELECT name FROM sqlite_master WHERE type='table' AND name NOT IN (",
+            (current, table) => current + $"'{table}', "
+        );
+        sql = sql.Remove(sql.Length - 2) + ")";
+        var tables = Connection.QueryAsync<string>(sql);
+        return tables;
+    }
+
+    public Task<TableSchema> GetTableSchema(string tableName)
+    {
+        var columns = Connection.QueryAsync<ColumnSchema>($"PRAGMA table_info({tableName})");
+        var count = Connection.QuerySingleAsync<int>($"SELECT COUNT(*) FROM {tableName}");
+        return Task.FromResult(
+            new TableSchema { Columns = columns.Result, RowCount = count.Result, }
+        );
+    }
+
+    public Task<IEnumerable<dynamic>> GetTableData(
         string tableName,
-        IDictionary<string, object?> data
+        int limit = 20,
+        int offset = 0,
+        string[] filters = null!
     )
     {
-        var dt = connection.GetSchema("Columns", new[] { null, null, tableName });
-        var columns = dt.Rows
-            .Cast<DataRow>()
-            .Where(x => x["AUTOINCREMENT"].ToString()! == "False")
-            .Select(x => x["COLUMN_NAME"].ToString())
-            .ToArray();
-
-        var command = connection.CreateCommand();
-        command.CommandText =
-            $"INSERT INTO {tableName} ({string.Join(", ", columns)}) VALUES ({string.Join(", ", columns.Select(x => $"@{x}"))}) RETURNING *";
-        foreach (var column in columns)
+        var sql = $"SELECT * FROM {tableName}";
+        if (filters.Length > 0)
         {
-            if (column is not null)
-                command.Parameters.Add(new SQLiteParameter($"@{column}", data[column]));
+            sql += " WHERE ";
+            sql += filters.Aggregate((current, filter) => current + $" AND {filter}");
         }
-
-        var reader = command.ExecuteReader();
-        var table = new DataTable();
-        table.Load(reader);
-
-        var row =
-            table
-                .Rows
-                .Cast<DataRow>()
-                .First()
-                .Table
-                .Columns
-                .Cast<DataColumn>()
-                .ToDictionary(
-                    col => col.ColumnName,
-                    col => table.Rows[0][col] is DBNull ? null : table.Rows[0][col]
-                ) ?? throw new Exception("Could not insert data.");
-        return row;
+        sql += $" LIMIT {limit} OFFSET {offset}";
+        Console.WriteLine(sql);
+        var data = Connection.QueryAsync<dynamic>(sql);
+        return data;
     }
 
-    public IDictionary<string, object?> UpdateData(
-        string tableName,
-        IDictionary<string, object?> data
-    )
+    public Task<dynamic> InsertData(string tableName, dynamic data)
     {
-        var dt = connection.GetSchema("Columns", new[] { null, null, tableName });
-        var columns = dt.Rows.Cast<DataRow>().Select(x => x["COLUMN_NAME"].ToString()).ToArray();
-
-        var command = connection.CreateCommand();
-
-        command.CommandText = command.CommandText =
-            $"UPDATE {tableName} SET {string.Join(", ", columns.Select(x => $"{x} = @{x}"))} WHERE {string.Join(" AND ", columns.Select(x => $"{x} IS @__initial_{x}"))} RETURNING *";
-        ;
-
-        foreach (var column in columns)
-        {
-            if (column is not null)
-            {
-                command.Parameters.Add(new SQLiteParameter($"@{column}", data[column]));
-                command
-                    .Parameters
-                    .Add(
-                        new SQLiteParameter(
-                            $"@__initial_{column}",
-                            data[$"__initial_{column}"] is null
-                                ? DBNull.Value
-                                : data[$"__initial_{column}"]
-                        )
-                    );
-            }
-        }
-
-        var reader = command.ExecuteReader();
-        var table = new DataTable();
-        table.Load(reader);
-
-        var row =
-            table
-                .Rows
-                .Cast<DataRow>()
-                .First()
-                .Table
-                .Columns
-                .Cast<DataColumn>()
-                .ToDictionary(
-                    col => col.ColumnName,
-                    col => table.Rows[0][col] is DBNull ? null : table.Rows[0][col]
-                ) ?? throw new Exception("Could not update data.");
-
-        return row;
+        throw new NotImplementedException();
     }
 
-    public void DeleteData(string tableName, IDictionary<string, object?> data)
+    public Task<dynamic> UpdateData(string tableName, dynamic data)
     {
-        var dt = connection.GetSchema("Columns", new[] { null, null, tableName });
-        var columns = dt.Rows.Cast<DataRow>().Select(x => x["COLUMN_NAME"].ToString()).ToArray();
-
-        var command = connection.CreateCommand();
-        command.CommandText =
-            $"DELETE FROM {tableName} WHERE {string.Join(" AND ", columns.Select(x => $"{x} {(data[x!] is null ? "IS NULL" : $"= @{x}")}"))}";
-
-        foreach (var column in columns)
-        {
-            if (column is not null)
-                command.Parameters.Add(new SQLiteParameter($"@{column}", data[column]));
-        }
-        if (command.ExecuteNonQuery() == 0)
-            throw new Exception("Could not delete data.");
+        throw new NotImplementedException();
     }
 
-    /// <summary>
-    /// Close the connection to the database.
-    /// </summary>
-    public void Close()
+    public Task<dynamic> DeleteData(string tableName, dynamic data)
     {
-        connection.Close();
+        throw new NotImplementedException();
     }
 }

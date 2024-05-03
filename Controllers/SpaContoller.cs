@@ -1,7 +1,7 @@
 using System.Text;
 using Microsoft.AspNetCore.Mvc;
 
-namespace squi.API.Controllers;
+namespace squi.Controllers;
 
 [ApiController]
 public class SpaController : ControllerBase

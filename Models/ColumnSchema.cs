@@ -1,4 +1,4 @@
-namespace Squi.Models;
+namespace squi.Models;
 
 /// Available row information:
 // TABLE_CATALOG: main

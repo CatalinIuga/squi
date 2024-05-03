@@ -1,98 +1,96 @@
 using System.Collections.Generic;
 using System.Data;
+using System.Drawing;
 using Microsoft.AspNetCore.Mvc;
-using Squi.Connectors;
+using squi.Connectors;
+using squi.Models;
 
-namespace squi.API.Controllers;
+namespace squi.Controllers;
 
 [ApiController]
 [Route("tables")]
 public class DbController : ControllerBase
 {
-    private readonly SQLiteProvider _sqliteProvider;
+    private readonly IConnector _dbConnector;
 
-    public DbController(SQLiteProvider sqliteProvider)
+    public DbController(IConnector connector)
     {
-        _sqliteProvider = sqliteProvider;
+        _dbConnector = connector;
     }
 
     [HttpGet]
-    public ActionResult<IEnumerable<string>> GetTables()
+    public async Task<IEnumerable<string>> GetTables()
     {
-        return _sqliteProvider.GetTables();
+        var tables = await _dbConnector.GetTableNames();
+        return tables;
     }
 
     [HttpGet("{tableName}")]
-    public ActionResult GetSchema(string tableName)
+    public async Task<TableSchema> GetSchema(string tableName)
     {
-        var schema = _sqliteProvider.GetSchema(tableName);
-        return Ok(schema);
+        var schema = await _dbConnector.GetTableSchema(tableName);
+        return schema;
     }
 
     [HttpGet("{tableName}/data")]
-    public ActionResult<IEnumerable<IDictionary<string, object>>> GetData(
+    public async Task<IEnumerable<dynamic>> GetData(
         string tableName,
         [FromQuery] int limit = 50,
         [FromQuery] int offset = 0,
         [FromQuery] string[]? filter = null
     )
     {
-        var data = _sqliteProvider.GetData(tableName, filter, limit, offset);
-        Console.WriteLine(data.Rows.Count);
-        var aux = data.AsEnumerable()
-            .Select(
-                row =>
-                    row.Table
-                        .Columns
-                        .Cast<DataColumn>()
-                        .ToDictionary(
-                            col => col.ColumnName,
-                            col => row[col] is DBNull ? null : row[col]
-                        )
-            )
-            .ToArray();
-        return Ok(aux);
-    }
-
-    [HttpPost("{tableName}/data")]
-    public IActionResult InsertData(string tableName, [FromBody] IDictionary<string, object?> data)
-    {
         try
         {
-            var inserted = _sqliteProvider.InsertData(tableName, data);
-            return Ok(new { message = "Data inserted", data = inserted });
+            filter ??= Array.Empty<string>();
+            var data = await _dbConnector.GetTableData(tableName, limit, offset, filter);
+            return data;
         }
-        catch (Exception e)
+        catch
         {
-            return BadRequest(new { message = e.Message });
+            return Array.Empty<dynamic>();
         }
     }
 
-    [HttpPut("{tableName}/data")]
-    public IActionResult UpdateData(string tableName, [FromBody] IDictionary<string, object?> data)
-    {
-        try
-        {
-            var updated = _sqliteProvider.UpdateData(tableName, data);
-            return Ok(new { message = "Data updated", data = updated });
-        }
-        catch (Exception e)
-        {
-            return BadRequest(new { message = e.Message });
-        }
-    }
+    // [HttpPost("{tableName}/data")]
+    // public IActionResult InsertData(string tableName, [FromBody] IDictionary<string, object?> data)
+    // {
+    //     try
+    //     {
+    //         var inserted = _dbConnector.InsertData(tableName, data);
+    //         return Ok(new { message = "Data inserted", data = inserted });
+    //     }
+    //     catch (Exception e)
+    //     {
+    //         return BadRequest(new { message = e.Message });
+    //     }
+    // }
 
-    [HttpDelete("{tableName}/data")]
-    public IActionResult DeleteData(string tableName, [FromBody] IDictionary<string, object?> data)
-    {
-        try
-        {
-            _sqliteProvider.DeleteData(tableName, data);
-            return Ok(new { message = "Data deleted" });
-        }
-        catch (Exception e)
-        {
-            return BadRequest(new { message = e.Message });
-        }
-    }
+    // [HttpPut("{tableName}/data")]
+    // public IActionResult UpdateData(string tableName, [FromBody] IDictionary<string, object?> data)
+    // {
+    //     try
+    //     {
+    //         var updated = _dbConnector.UpdateData(tableName, data);
+    //         return Ok(new { message = "Data updated", data = updated });
+    //     }
+    //     catch (Exception e)
+    //     {
+    //         return BadRequest(new { message = e.Message });
+    //     }
+    // }
+
+    // [HttpDelete("{tableName}/data")]
+    // public IActionResult DeleteData(string tableName, [FromBody] IDictionary<string, object?> data)
+    // {
+    //     try
+    //     {
+    //         _dbConnector.DeleteData(tableName, data);
+    //         return Ok(new { message = "Data deleted" });
+    //     }
+    //     catch (Exception e)
+    //     {
+    //         return BadRequest(new { message = e.Message });
+    //     }
+    // }
 }

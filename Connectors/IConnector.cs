@@ -1,19 +1,70 @@
-using Squi.Models;
+using squi.Models;
 
-namespace squi.API.Connectors;
+namespace squi.Connectors;
 
+/// <summary>
+/// This interface is used to define the methods that a connector must implement.
+/// </summary>
 public interface IConnector
 {
-    string ConnectionString { get; set; }
+    /// <summary>
+    /// The mandatory connection string, in the specific format for the database of choice.
+    /// </summary>
+    /// <example>
+    /// For SQLite, this would be the path to the database file.
+    /// For PostgreSQL, this would be the connection string like: "postgres://user:password@localhost:5432/database"
+    /// </example>
+    string ConnectionString { get; init; }
 
+    /// <summary>
+    /// The list of tables that are specific to the database, and should not be shown to the user.
+    /// </summary>
+    public List<string> PrivateTables { get; }
+
+    /// <summary>
+    /// Connects to the database.
+    /// </summary>
     void Connect();
+
+    /// <summary>
+    /// Disconnects from the database.
+    /// </summary>
     void Disconnect();
 
-    Task<List<string>> GetTableNames();
+    /// <summary>
+    /// Gets the names of the tables in the database.
+    /// </summary>
+    Task<IEnumerable<string>> GetTableNames();
+
+    /// <summary>
+    /// Gets the schema of a table, including the columns and the number of rows.
+    /// </summary>
     Task<TableSchema> GetTableSchema(string tableName);
 
-    Task<dynamic> GetTableData(string tableName, int limit, int offset, string[] filters);
+    /// <summary>
+    /// Gets the data from a table. This method should support filtering, limiting and offsetting.
+    /// </summary>
+    Task<IEnumerable<dynamic>> GetTableData(
+        string tableName,
+        int limit,
+        int offset,
+        string[] filters
+    );
+
+    /// <summary>
+    /// Inserts data into a table. The data should be a dictionary with the column names as keys.
+    /// </summary>
     Task<dynamic> InsertData(string tableName, dynamic data);
+
+    /// <summary>
+    /// Updates data in a table. The data should be a dictionary with the column names as keys.
+    /// TODO: This should also include the primary key or some other way to identify the row.
+    /// </summary>
     Task<dynamic> UpdateData(string tableName, dynamic data);
+
+    /// <summary>
+    /// Deletes data from a table. The data should be a dictionary with the column names as keys.
+    /// TODO: This should also include the primary key or some other way to identify the row.
+    /// </summary>
     Task<dynamic> DeleteData(string tableName, dynamic data);
 }

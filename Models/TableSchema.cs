@@ -1,6 +1,6 @@
 using System.Data;
 
-namespace Squi.Models;
+namespace squi.Models;
 
 /// <summary>
 /// Represents a database table, with its columns.
@@ -12,7 +12,18 @@ public class TableSchema
     /// <summary>
     /// The columns of the table.
     /// </summary>
-    public List<ColumnSchema> Columns { get; set; } = new List<ColumnSchema>();
+    public IEnumerable<ColumnSchema> Columns { get; set; } = new List<ColumnSchema>();
+
+    // TODO: Add more properties like indexes, constraints, etc.
+    // TODO: This only works for SQLite, add support for other databases.
+
+    public TableSchema() { }
+
+    public TableSchema(IEnumerable<ColumnSchema> columns, int rowCount)
+    {
+        Columns = columns;
+        RowCount = rowCount;
+    }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="TableSchema"/> class.
@@ -33,7 +44,7 @@ public class TableSchema
                 Default = row["COLUMN_DEFAULT"].ToString()!,
             };
 
-            Columns.Add(column);
+            _ = Columns.Append(column);
         }
         RowCount = rowCount;
     }
