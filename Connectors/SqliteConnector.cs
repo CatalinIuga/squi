@@ -62,7 +62,7 @@ public class SQLiteConnector : IConnector
         );
     }
 
-    public Task<IEnumerable<dynamic>> GetTableData(
+    public Task<IEnumerable<TableData>> GetTableData(
         string tableName,
         string[] filters,
         int limit = 50,
@@ -76,9 +76,20 @@ public class SQLiteConnector : IConnector
             sql += filters.Aggregate((current, filter) => current + $" AND {filter}");
         }
         sql += $" LIMIT {limit} OFFSET {offset}";
-        Console.WriteLine(sql);
-        var data = Connection.QueryAsync<dynamic>(sql);
-        return data;
+        var data = Connection.QueryAsync(sql);
+        var tableData = data.Result
+            .Select(row =>
+            {
+                var tableRow = new TableData();
+                foreach (var column in row)
+                {
+                    tableRow.Add(column.Key, column.Value);
+                }
+                return tableRow;
+            })
+            .ToList();
+
+        return Task.FromResult(tableData.AsEnumerable());
     }
 
     public Task<dynamic> InsertData(string tableName, dynamic data)

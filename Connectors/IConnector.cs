@@ -44,7 +44,7 @@ public interface IConnector
     /// <summary>
     /// Gets the data from a table. This method should support filtering, limiting and offsetting.
     /// </summary>
-    Task<IEnumerable<dynamic>> GetTableData(
+    Task<IEnumerable<TableData>> GetTableData(
         string tableName,
         string[] filters,
         int limit = 50,
