@@ -43,7 +43,7 @@ public class DbController : ControllerBase
         try
         {
             filter ??= Array.Empty<string>();
-            var data = await _dbConnector.GetTableData(tableName, limit, offset, filter);
+            var data = await _dbConnector.GetTableData(tableName, filter, limit, offset);
             return data;
         }
         catch

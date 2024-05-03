@@ -35,6 +35,7 @@ const props = defineProps({
     type: Number,
     required: true,
   },
+  // TODO: this seems to persist even when the filters show empty
   filters: {
     type: Array<string>,
     required: true,
@@ -142,7 +143,7 @@ const getGridData = async (
 ) => {
   loading.value = true;
 
-  // i kinnda like this
+  // i kinnda like this delay, it gives the user a sense of loading
   await new Promise((resolve) => setTimeout(resolve, 1000));
 
   let newColDefs: ColDef[] = [];

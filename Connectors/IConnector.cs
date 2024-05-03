@@ -46,9 +46,9 @@ public interface IConnector
     /// </summary>
     Task<IEnumerable<dynamic>> GetTableData(
         string tableName,
-        int limit,
-        int offset,
-        string[] filters
+        string[] filters,
+        int limit = 50,
+        int offset = 0
     );
 
     /// <summary>

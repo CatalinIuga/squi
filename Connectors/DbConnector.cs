@@ -2,6 +2,9 @@ using System.Text.RegularExpressions;
 
 namespace squi.Connectors;
 
+/// <summary>
+/// This class is used to create the correct database connector based on the connection string.
+/// </summary>
 public class DbConnector
 {
     /// <summary>

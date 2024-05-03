@@ -64,9 +64,9 @@ public class SQLiteConnector : IConnector
 
     public Task<IEnumerable<dynamic>> GetTableData(
         string tableName,
-        int limit = 20,
-        int offset = 0,
-        string[] filters = null!
+        string[] filters,
+        int limit = 50,
+        int offset = 0
     )
     {
         var sql = $"SELECT * FROM {tableName}";
