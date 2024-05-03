@@ -1,13 +1,17 @@
-using Squi.Connectors;
+using squi.Connectors;
 
 if (args.Length != 1)
 {
     Console.WriteLine("Usage: squi <connectionString>");
-    return;
+    Console.WriteLine("Example: squi chinook.db");
+    Console.WriteLine(
+        "Example: squi postgresql://[user[:password]@][netloc][:port][/dbname][?param1=value1&...]"
+    );
+    Environment.Exit(1);
 }
 
-// TODO: Swap for a proper DI container
-var sqliteProvider = new SQLiteProvider(args[0]);
+var connector = DbConnector.CreateConnector(args[0]);
+connector.Connect();
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -22,7 +26,7 @@ builder
     });
 
 // TODO: Add a proper DI container
-builder.Services.AddSingleton(sqliteProvider);
+builder.Services.AddSingleton(connector);
 builder.Services.AddControllers();
 builder.Services.AddSwaggerGen();
 builder.Services.AddCors();
@@ -58,6 +62,6 @@ Console.ForegroundColor = ConsoleColor.DarkGreen;
 Console.WriteLine("http://localhost:5076");
 Console.ResetColor();
 
-app.Lifetime.ApplicationStopping.Register(sqliteProvider.Close);
+app.Lifetime.ApplicationStopping.Register(connector.Disconnect);
 
 app.Run();
