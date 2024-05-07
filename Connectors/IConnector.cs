@@ -54,17 +54,15 @@ public interface IConnector
     /// <summary>
     /// Inserts data into a table. The data should be a dictionary with the column names as keys.
     /// </summary>
-    Task<dynamic> InsertData(string tableName, dynamic data);
+    Task<Result> InsertData(string tableName, TableData data);
 
     /// <summary>
     /// Updates data in a table. The data should be a dictionary with the column names as keys.
-    /// TODO: This should also include the primary key or some other way to identify the row.
     /// </summary>
-    Task<dynamic> UpdateData(string tableName, dynamic data);
+    Task<Result> UpdateData(string tableName, TableData data);
 
     /// <summary>
     /// Deletes data from a table. The data should be a dictionary with the column names as keys.
-    /// TODO: This should also include the primary key or some other way to identify the row.
     /// </summary>
-    Task<dynamic> DeleteData(string tableName, dynamic data);
+    Task<Result> DeleteData(string tableName, TableData data);
 }

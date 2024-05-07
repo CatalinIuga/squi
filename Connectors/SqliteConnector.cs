@@ -77,33 +77,82 @@ public class SQLiteConnector : IConnector
         }
         sql += $" LIMIT {limit} OFFSET {offset}";
         var data = Connection.QueryAsync(sql);
-        var tableData = data.Result
-            .Select(row =>
+        return Task.FromResult(data.Result.Select(row => new TableData(row)));
+    }
+
+    // TODO: Frontend must be updated for the bellow methods to work
+    public Task<Result> InsertData(string tableName, TableData data)
+    {
+        var columns = data.Keys
+            .Where(column => !column.StartsWith("__initial_") && column != "isnewRow")
+            .Aggregate("", (current, column) => current + $"{column}, ");
+        columns = columns.Remove(columns.Length - 2);
+        var values = data.Values.Aggregate(
+            "",
+            (current, value) => current + $"'{(value is null ? DBNull.Value : value)}', "
+        );
+        values = values.Remove(values.Length - 2);
+        var sql = $"INSERT INTO {tableName} ({columns}) VALUES ({values})";
+        Console.WriteLine(sql);
+        try
+        {
+            Connection.Execute(sql);
+            return Task.FromResult(new Result { Ok = true });
+        }
+        catch (Exception e)
+        {
+            return Task.FromResult(new Result { Ok = false, Err = e.Message });
+        }
+    }
+
+    public Task<Result> UpdateData(string tableName, TableData data)
+    {
+        var set = data.Where(column => !column.Key.StartsWith("__initial_"))
+            .Aggregate("", (current, column) => current + $"{column.Key} = '{column.Value}', ");
+
+        var where = data.Where(column => column.Key.StartsWith("__initial_"))
+            .Aggregate(
+                "",
+                (current, column) =>
+                    current + $"{column.Key.Remove(column.Key.Length - 5)} = '{column.Value}' AND "
+            );
+
+        set = set.Remove(set.Length - 2);
+        where = where.Remove(where.Length - 5);
+        var sql = $"UPDATE {tableName} SET {set} WHERE {where}";
+        Console.WriteLine(sql);
+        try
+        {
+            Connection.Execute(sql);
+            return Task.FromResult(new Result { Ok = true });
+        }
+        catch (Exception e)
+        {
+            return Task.FromResult(new Result { Ok = false, Err = e.Message });
+        }
+    }
+
+    public Task<Result> DeleteData(string tableName, TableData data)
+    {
+        var where = data.Aggregate(
+            "",
+            (current, column) => current + $"{column.Key} = '{column.Value}' AND "
+        );
+        where = where.Remove(where.Length - 5);
+        var sql = $"DELETE FROM {tableName} WHERE {where}";
+        try
+        {
+            Connection.Execute(sql);
+            // test if the delete was successful
+            if (Connection.QuerySingle<int>($"SELECT changes()") == 0)
             {
-                var tableRow = new TableData();
-                foreach (var column in row)
-                {
-                    tableRow.Add(column.Key, column.Value);
-                }
-                return tableRow;
-            })
-            .ToList();
-
-        return Task.FromResult(tableData.AsEnumerable());
-    }
-
-    public Task<dynamic> InsertData(string tableName, dynamic data)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<dynamic> UpdateData(string tableName, dynamic data)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<dynamic> DeleteData(string tableName, dynamic data)
-    {
-        throw new NotImplementedException();
+                return Task.FromResult(new Result { Ok = false, Err = "No rows were deleted" });
+            }
+            return Task.FromResult(new Result { Ok = true });
+        }
+        catch (Exception e)
+        {
+            return Task.FromResult(new Result { Ok = false, Err = e.Message });
+        }
     }
 }

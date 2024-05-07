@@ -49,45 +49,48 @@ public class DbController : ControllerBase
         }
     }
 
-    // [HttpPost("{tableName}/data")]
-    // public IActionResult InsertData(string tableName, [FromBody] IDictionary<string, object?> data)
-    // {
-    //     try
-    //     {
-    //         var inserted = _dbConnector.InsertData(tableName, data);
-    //         return Ok(new { message = "Data inserted", data = inserted });
-    //     }
-    //     catch (Exception e)
-    //     {
-    //         return BadRequest(new { message = e.Message });
-    //     }
-    // }
+    [HttpPost("{tableName}/data")]
+    public async Task<IActionResult> InsertData(
+        string tableName,
+        [FromBody] IDictionary<string, object?> data
+    )
+    {
+        var inserted = await _dbConnector.InsertData(tableName, new TableData(data));
 
-    // [HttpPut("{tableName}/data")]
-    // public IActionResult UpdateData(string tableName, [FromBody] IDictionary<string, object?> data)
-    // {
-    //     try
-    //     {
-    //         var updated = _dbConnector.UpdateData(tableName, data);
-    //         return Ok(new { message = "Data updated", data = updated });
-    //     }
-    //     catch (Exception e)
-    //     {
-    //         return BadRequest(new { message = e.Message });
-    //     }
-    // }
+        return inserted.Ok switch
+        {
+            true => Ok(new { message = "Data inserted" }),
+            _ => BadRequest(new { message = inserted.Err }),
+        };
+    }
 
-    // [HttpDelete("{tableName}/data")]
-    // public IActionResult DeleteData(string tableName, [FromBody] IDictionary<string, object?> data)
-    // {
-    //     try
-    //     {
-    //         _dbConnector.DeleteData(tableName, data);
-    //         return Ok(new { message = "Data deleted" });
-    //     }
-    //     catch (Exception e)
-    //     {
-    //         return BadRequest(new { message = e.Message });
-    //     }
-    // }
+    [HttpPut("{tableName}/data")]
+    public async Task<IActionResult> UpdateData(
+        string tableName,
+        [FromBody] IDictionary<string, object?> data
+    )
+    {
+        var updated = await _dbConnector.UpdateData(tableName, new TableData(data));
+
+        return updated.Ok switch
+        {
+            true => Ok(new { message = "Data updated" }),
+            _ => BadRequest(new { message = updated.Err }),
+        };
+    }
+
+    [HttpDelete("{tableName}/data")]
+    public async Task<IActionResult> DeleteData(
+        string tableName,
+        [FromBody] IDictionary<string, object?> data
+    )
+    {
+        var deleted = await _dbConnector.DeleteData(tableName, new TableData(data));
+
+        return deleted.Ok switch
+        {
+            true => Ok(new { message = "Data deleted" }),
+            _ => BadRequest(new { message = deleted.Err }),
+        };
+    }
 }
