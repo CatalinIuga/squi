@@ -12,8 +12,12 @@ public class DbConnector
         connectionString switch
         {
             // TODO: Add more connectors
-            string s when s.StartsWith("postgres:") => new SQLiteConnector(connectionString),
-            string s when s.StartsWith("mysql:") => new SQLiteConnector(connectionString),
+            string s when s.StartsWith("postgres:")
+                => throw new NotImplementedException(
+                    "PostgreSQL connector is not implemented yet."
+                ),
+            string s when s.StartsWith("mysql:")
+                => throw new NotImplementedException("MySQL connector is not implemented yet."),
             _ => new SQLiteConnector(connectionString)
         };
 }

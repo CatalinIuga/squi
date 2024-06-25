@@ -1,12 +1,11 @@
+using AspNetCore.Scalar;
 using squi.Connectors;
 
 if (args.Length != 1)
 {
     Console.WriteLine("Usage: squi <connectionString>");
-    Console.WriteLine("Example: squi chinook.db");
-    Console.WriteLine(
-        "Example: squi postgresql://[user[:password]@][netloc][:port][/dbname][?param1=value1&...]"
-    );
+    Console.WriteLine("Example: squi sample.db");
+    Console.WriteLine("Example: squi postgresql://[user[:password]@][netloc][:port][/dbname]");
     Environment.Exit(1);
 }
 
@@ -34,11 +33,8 @@ app.UseCors(o => o.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());
 
 app.MapControllers();
 
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "squi.API v1"));
-}
+app.UseSwagger();
+app.UseScalar(o => o.RoutePrefix = "docs");
 
 // Log the connection string
 // TODO: Add an actual logger

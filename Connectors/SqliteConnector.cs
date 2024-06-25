@@ -1,10 +1,9 @@
 using System.Data.SQLite;
 using Dapper;
 using squi.Models;
+using squi.Utils;
 
 namespace squi.Connectors;
-
-// TODO: Swap to Dapper or something cause i cant get this reference to work
 
 /// <summary>
 /// This class is used to connect to a SQLite database.
@@ -64,18 +63,14 @@ public class SQLiteConnector : IConnector
 
     public Task<IEnumerable<TableData>> GetTableData(
         string tableName,
-        string[] filters,
+        IDictionary<string, object?> filters,
         int limit = 50,
         int offset = 0
     )
     {
-        var sql = $"SELECT * FROM {tableName}";
-        if (filters.Length > 0)
-        {
-            sql += " WHERE ";
-            sql += filters.Aggregate((current, filter) => current + $" AND {filter}");
-        }
+        var sql = SqlHelpers.GenerateSelect(tableName, filters);
         sql += $" LIMIT {limit} OFFSET {offset}";
+        Console.WriteLine(sql);
         var data = Connection.QueryAsync(sql);
         return Task.FromResult(data.Result.Select(row => new TableData(row)));
     }
@@ -89,7 +84,7 @@ public class SQLiteConnector : IConnector
         columns = columns.Remove(columns.Length - 2);
         var values = data.Values.Aggregate(
             "",
-            (current, value) => current + $"'{(value is null ? DBNull.Value : value)}', "
+            (current, value) => current + $"{(value is null ? null : "'" + value + "'")}, "
         );
         values = values.Remove(values.Length - 2);
         var sql = $"INSERT INTO {tableName} ({columns}) VALUES ({values})";
@@ -134,12 +129,8 @@ public class SQLiteConnector : IConnector
 
     public Task<Result> DeleteData(string tableName, TableData data)
     {
-        var where = data.Aggregate(
-            "",
-            (current, column) => current + $"{column.Key} = '{column.Value}' AND "
-        );
-        where = where.Remove(where.Length - 5);
-        var sql = $"DELETE FROM {tableName} WHERE {where}";
+        var sql = SqlHelpers.GenerateDelete(tableName, data);
+        Console.WriteLine(sql);
         try
         {
             Connection.Execute(sql);

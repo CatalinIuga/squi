@@ -8,6 +8,9 @@ public class TableData : Dictionary<string, object?>
 {
     public TableData() { }
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="TableData"/> class that contains elements copied from the specified <see cref="IDictionary{TKey, TValue}"/>.
+    /// </summary>
     public TableData(IDictionary<string, object?> dictionary)
         : base(dictionary) { }
 }

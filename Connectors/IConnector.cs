@@ -46,7 +46,7 @@ public interface IConnector
     /// </summary>
     Task<IEnumerable<TableData>> GetTableData(
         string tableName,
-        string[] filters,
+        IDictionary<string, object?> filters,
         int limit = 50,
         int offset = 0
     );

@@ -6,6 +6,13 @@ namespace squi.Models;
 /// </summary>
 public class Result
 {
+    /// <summary>
+    /// Whether the operation was successful.
+    /// </summary>
     public bool Ok { get; set; }
+
+    /// <summary>
+    /// Any error messages that should be displayed to the user.
+    /// </summary>
     public string Err { get; set; } = "";
 }

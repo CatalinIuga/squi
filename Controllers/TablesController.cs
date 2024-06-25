@@ -1,16 +1,18 @@
+using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
 using squi.Connectors;
 using squi.Models;
+using squi.Utils;
 
 namespace squi.Controllers;
 
 [ApiController]
 [Route("tables")]
-public class DbController : ControllerBase
+public class TablesController : ControllerBase
 {
     private readonly IConnector _dbConnector;
 
-    public DbController(IConnector connector)
+    public TablesController(IConnector connector)
     {
         _dbConnector = connector;
     }
@@ -29,22 +31,29 @@ public class DbController : ControllerBase
         return schema;
     }
 
-    [HttpGet("{tableName}/data")]
+    [HttpPost("{tableName}/data/select")]
     public async Task<IEnumerable<dynamic>> GetData(
         string tableName,
+        [FromBody] Dictionary<string, object?> filters,
         [FromQuery] int limit = 50,
-        [FromQuery] int offset = 0,
-        [FromQuery] string[]? filter = null
+        [FromQuery] int offset = 0
     )
     {
         try
         {
-            filter ??= Array.Empty<string>();
-            var data = await _dbConnector.GetTableData(tableName, filter, limit, offset);
+            // must convert JsonElement to Dictionary<string, object?>
+            foreach (var key in filters.Keys)
+            {
+                filters[key] = filters[key] is null
+                    ? null
+                    : JsonElementConvert.ConvertJsonElement((JsonElement)filters[key]!);
+            }
+            var data = await _dbConnector.GetTableData(tableName, filters, limit, offset);
             return data;
         }
-        catch
+        catch (Exception e)
         {
+            Console.WriteLine(e.Message);
             return Array.Empty<dynamic>();
         }
     }
@@ -55,6 +64,11 @@ public class DbController : ControllerBase
         [FromBody] IDictionary<string, object?> data
     )
     {
+        foreach (var key in data.Keys)
+        {
+            Console.WriteLine(data[key]);
+        }
+
         var inserted = await _dbConnector.InsertData(tableName, new TableData(data));
 
         return inserted.Ok switch
@@ -85,6 +99,12 @@ public class DbController : ControllerBase
         [FromBody] IDictionary<string, object?> data
     )
     {
+        foreach (var key in data.Keys)
+        {
+            data[key] = data[key] is null
+                ? null
+                : JsonElementConvert.ConvertJsonElement((JsonElement)data[key]!);
+        }
         var deleted = await _dbConnector.DeleteData(tableName, new TableData(data));
 
         return deleted.Ok switch
@@ -92,5 +112,30 @@ public class DbController : ControllerBase
             true => Ok(new { message = "Data deleted" }),
             _ => BadRequest(new { message = deleted.Err }),
         };
+    }
+
+    // TODO: Implement the following methods
+    public class DataFilters
+    {
+        public string Column { get; set; } = null!;
+        public string Value { get; set; } = null!;
+
+        public Operator Operator { get; set; }
+    }
+
+    public enum Operator
+    {
+        Equal,
+        NotEqual,
+        GreaterThan,
+        LessThan,
+        GreaterThanOrEqual,
+        LessThanOrEqual,
+        Like,
+        NotLike,
+        In,
+        NotIn,
+        IsNull,
+        IsNotNull,
     }
 }
