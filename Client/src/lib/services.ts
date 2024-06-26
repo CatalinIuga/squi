@@ -1,4 +1,4 @@
-import { ApiResponse, TableSchema } from "../types/responses";
+import { ApiResponse, TableSchema } from "./types";
 
 // TODO: Clean this stuff up, could also try to use a vite proxy
 

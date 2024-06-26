@@ -10,8 +10,8 @@ import {
   getTableSchema,
   insertTableData,
   updateTableData,
-} from "@/service/dataService";
-import { TableSchema } from "@/types/responses";
+} from "@/lib/services";
+import { TableSchema } from "@/lib/types";
 import { useColorMode } from "@vueuse/core";
 import {
   ColDef,
