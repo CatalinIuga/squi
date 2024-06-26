@@ -31,44 +31,31 @@ public class TablesController : ControllerBase
         return schema;
     }
 
-    [HttpPost("{tableName}/data/select")]
-    public async Task<IEnumerable<dynamic>> GetData(
+    [HttpPost("{tableName}/select")]
+    public async Task<IEnumerable<dynamic>> SelectData(
         string tableName,
-        [FromBody] Dictionary<string, object?> filters,
+        [FromBody] DataFilters[]? filters,
         [FromQuery] int limit = 50,
         [FromQuery] int offset = 0
     )
     {
-        try
+        filters ??= Array.Empty<DataFilters>();
+
+        var selected = await _dbConnector.SelectData(tableName, filters, limit, offset);
+
+        return selected.Ok switch
         {
-            // must convert JsonElement to Dictionary<string, object?>
-            foreach (var key in filters.Keys)
-            {
-                filters[key] = filters[key] is null
-                    ? null
-                    : JsonElementConvert.ConvertJsonElement((JsonElement)filters[key]!);
-            }
-            var data = await _dbConnector.GetTableData(tableName, filters, limit, offset);
-            return data;
-        }
-        catch (Exception e)
-        {
-            Console.WriteLine(e.Message);
-            return Array.Empty<dynamic>();
-        }
+            true => selected.Data,
+            _ => BadRequest(new { message = selected.Err })
+        };
     }
 
-    [HttpPost("{tableName}/data")]
+    [HttpPost("{tableName}/insert")]
     public async Task<IActionResult> InsertData(
         string tableName,
         [FromBody] IDictionary<string, object?> data
     )
     {
-        foreach (var key in data.Keys)
-        {
-            Console.WriteLine(data[key]);
-        }
-
         var inserted = await _dbConnector.InsertData(tableName, new TableData(data));
 
         return inserted.Ok switch
@@ -78,13 +65,13 @@ public class TablesController : ControllerBase
         };
     }
 
-    [HttpPut("{tableName}/data")]
-    public async Task<IActionResult> UpdateData(
-        string tableName,
-        [FromBody] IDictionary<string, object?> data
-    )
+    [HttpPost("{tableName}/update")]
+    public async Task<IActionResult> UpdateData(string tableName, [FromBody] UpdateDataRequest data)
     {
-        var updated = await _dbConnector.UpdateData(tableName, new TableData(data));
+        var oldValues = new TableData(data.OldData);
+        var newValues = new TableData(data.NewData);
+
+        var updated = await _dbConnector.UpdateData(tableName, oldValues, newValues);
 
         return updated.Ok switch
         {
@@ -93,18 +80,12 @@ public class TablesController : ControllerBase
         };
     }
 
-    [HttpDelete("{tableName}/data")]
+    [HttpPost("{tableName}/delete")]
     public async Task<IActionResult> DeleteData(
         string tableName,
         [FromBody] IDictionary<string, object?> data
     )
     {
-        foreach (var key in data.Keys)
-        {
-            data[key] = data[key] is null
-                ? null
-                : JsonElementConvert.ConvertJsonElement((JsonElement)data[key]!);
-        }
         var deleted = await _dbConnector.DeleteData(tableName, new TableData(data));
 
         return deleted.Ok switch
@@ -114,28 +95,9 @@ public class TablesController : ControllerBase
         };
     }
 
-    // TODO: Implement the following methods
-    public class DataFilters
+    public class UpdateDataRequest
     {
-        public string Column { get; set; } = null!;
-        public string Value { get; set; } = null!;
-
-        public Operator Operator { get; set; }
-    }
-
-    public enum Operator
-    {
-        Equal,
-        NotEqual,
-        GreaterThan,
-        LessThan,
-        GreaterThanOrEqual,
-        LessThanOrEqual,
-        Like,
-        NotLike,
-        In,
-        NotIn,
-        IsNull,
-        IsNotNull,
+        public required IDictionary<string, object?> OldData { get; set; }
+        public required IDictionary<string, object?> NewData { get; set; }
     }
 }

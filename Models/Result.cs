@@ -12,6 +12,11 @@ public class Result
     public bool Ok { get; set; }
 
     /// <summary>
+    /// Any data that should be returned to the user.
+    /// </summary>
+    public dynamic Data { get; set; } = null!;
+
+    /// <summary>
     /// Any error messages that should be displayed to the user.
     /// </summary>
     public string Err { get; set; } = "";

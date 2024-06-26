@@ -31,7 +31,7 @@ public class SQLiteConnector : IConnector
         }
         catch (Exception e)
         {
-            Console.WriteLine(e.Message);
+            Logger.Error(e.Message);
             Environment.Exit(1);
         }
     }
@@ -54,45 +54,43 @@ public class SQLiteConnector : IConnector
 
     public Task<TableSchema> GetTableSchema(string tableName)
     {
-        var columns = Connection.QueryAsync<ColumnSchema>($"PRAGMA table_info({tableName})");
+        var columns = Connection.GetSchemaAsync("Columns", new[] { null, null, tableName, null });
         var count = Connection.QuerySingleAsync<int>($"SELECT COUNT(*) FROM {tableName}");
-        return Task.FromResult(
-            new TableSchema { Columns = columns.Result, RowCount = count.Result, }
-        );
+        return Task.FromResult(new TableSchema(columns.Result, count.Result));
     }
 
-    public Task<IEnumerable<TableData>> GetTableData(
+    public Task<Result> SelectData(
         string tableName,
-        IDictionary<string, object?> filters,
+        IEnumerable<DataFilters> filters,
         int limit = 50,
         int offset = 0
     )
     {
-        var sql = SqlHelpers.GenerateSelect(tableName, filters);
-        sql += $" LIMIT {limit} OFFSET {offset}";
-        Console.WriteLine(sql);
-        var data = Connection.QueryAsync(sql);
-        return Task.FromResult(data.Result.Select(row => new TableData(row)));
+        var sql = SqlHelpers.GenerateSelect(tableName, filters, limit, offset);
+        try
+        {
+            var data = Connection.QueryAsync(sql);
+            var result = data.Result.Select(row => new TableData(row));
+            return Task.FromResult(new Result { Ok = true, Data = result });
+        }
+        catch (Exception e)
+        {
+            Logger.Error(e.Message);
+            return Task.FromResult(new Result { Ok = false, Err = e.Message });
+        }
     }
 
-    // TODO: Frontend must be updated for the bellow methods to work
     public Task<Result> InsertData(string tableName, TableData data)
     {
-        var columns = data.Keys
-            .Where(column => !column.StartsWith("__initial_") && column != "isnewRow")
-            .Aggregate("", (current, column) => current + $"{column}, ");
-        columns = columns.Remove(columns.Length - 2);
-        var values = data.Values.Aggregate(
-            "",
-            (current, value) => current + $"{(value is null ? null : "'" + value + "'")}, "
-        );
-        values = values.Remove(values.Length - 2);
-        var sql = $"INSERT INTO {tableName} ({columns}) VALUES ({values})";
-        Console.WriteLine(sql);
+        var sql = SqlHelpers.GenerateInsert(tableName, data);
         try
         {
             Connection.Execute(sql);
-            return Task.FromResult(new Result { Ok = true });
+            return CheckChanges() switch
+            {
+                true => Task.FromResult(new Result { Ok = true }),
+                false => Task.FromResult(new Result { Ok = false, Err = "No rows were inserted" }),
+            };
         }
         catch (Exception e)
         {
@@ -100,26 +98,17 @@ public class SQLiteConnector : IConnector
         }
     }
 
-    public Task<Result> UpdateData(string tableName, TableData data)
+    public Task<Result> UpdateData(string tableName, TableData oldValues, TableData newValues)
     {
-        var set = data.Where(column => !column.Key.StartsWith("__initial_"))
-            .Aggregate("", (current, column) => current + $"{column.Key} = '{column.Value}', ");
-
-        var where = data.Where(column => column.Key.StartsWith("__initial_"))
-            .Aggregate(
-                "",
-                (current, column) =>
-                    current + $"{column.Key.Remove(column.Key.Length - 5)} = '{column.Value}' AND "
-            );
-
-        set = set.Remove(set.Length - 2);
-        where = where.Remove(where.Length - 5);
-        var sql = $"UPDATE {tableName} SET {set} WHERE {where}";
-        Console.WriteLine(sql);
+        var sql = SqlHelpers.GenerateUpdate(tableName, oldValues, newValues);
         try
         {
             Connection.Execute(sql);
-            return Task.FromResult(new Result { Ok = true });
+            return CheckChanges() switch
+            {
+                true => Task.FromResult(new Result { Ok = true }),
+                false => Task.FromResult(new Result { Ok = false, Err = "No rows were updated" }),
+            };
         }
         catch (Exception e)
         {
@@ -130,20 +119,23 @@ public class SQLiteConnector : IConnector
     public Task<Result> DeleteData(string tableName, TableData data)
     {
         var sql = SqlHelpers.GenerateDelete(tableName, data);
-        Console.WriteLine(sql);
         try
         {
             Connection.Execute(sql);
-            // test if the delete was successful
-            if (Connection.QuerySingle<int>($"SELECT changes()") == 0)
+            return CheckChanges() switch
             {
-                return Task.FromResult(new Result { Ok = false, Err = "No rows were deleted" });
-            }
-            return Task.FromResult(new Result { Ok = true });
+                true => Task.FromResult(new Result { Ok = true }),
+                false => Task.FromResult(new Result { Ok = false, Err = "No rows were deleted" }),
+            };
         }
         catch (Exception e)
         {
             return Task.FromResult(new Result { Ok = false, Err = e.Message });
         }
+    }
+
+    public bool CheckChanges()
+    {
+        return Connection.QuerySingle<int>($"SELECT changes()") > 0;
     }
 }

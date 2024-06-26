@@ -1,11 +1,10 @@
 using AspNetCore.Scalar;
 using squi.Connectors;
+using squi.Utils;
 
 if (args.Length != 1)
 {
-    Console.WriteLine("Usage: squi <connectionString>");
-    Console.WriteLine("Example: squi sample.db");
-    Console.WriteLine("Example: squi postgresql://[user[:password]@][netloc][:port][/dbname]");
+    Logger.Error("No connection string provided");
     Environment.Exit(1);
 }
 
@@ -36,13 +35,7 @@ app.MapControllers();
 app.UseSwagger();
 app.UseScalar(o => o.RoutePrefix = "docs");
 
-// Log the connection string
-// TODO: Add an actual logger
-Console.ForegroundColor = ConsoleColor.DarkBlue;
-Console.Write("Running on: ");
-Console.ForegroundColor = ConsoleColor.DarkGreen;
-Console.WriteLine("http://localhost:5076");
-Console.ResetColor();
+Logger.Info("Running on http://localhost:5076");
 
 app.Lifetime.ApplicationStopping.Register(connector.Disconnect);
 

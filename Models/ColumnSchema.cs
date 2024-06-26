@@ -43,5 +43,5 @@ public class ColumnSchema
     /// <summary>
     /// The default value of the column.
     /// </summary>
-    public string Default { get; set; } = string.Empty;
+    public object Default { get; set; } = string.Empty;
 }

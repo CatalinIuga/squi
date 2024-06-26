@@ -1,3 +1,7 @@
+using System.Runtime.CompilerServices;
+using System.Text.Json;
+using squi.Utils;
+
 namespace squi.Models;
 
 /// <summary>
@@ -12,5 +16,12 @@ public class TableData : Dictionary<string, object?>
     /// Initializes a new instance of the <see cref="TableData"/> class that contains elements copied from the specified <see cref="IDictionary{TKey, TValue}"/>.
     /// </summary>
     public TableData(IDictionary<string, object?> dictionary)
-        : base(dictionary) { }
+    {
+        foreach (var key in dictionary.Keys)
+        {
+            if (dictionary[key] is JsonElement jsonElement)
+                dictionary[key] = JsonElementConvert.ConvertJsonElement(jsonElement);
+            Add(key, dictionary[key]);
+        }
+    }
 }

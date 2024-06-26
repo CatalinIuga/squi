@@ -1,8 +1,42 @@
-using System.Collections.Immutable;
-using System.Linq;
 using System.Text.RegularExpressions;
+using squi.Models;
 
 namespace squi.Utils;
+
+public class Operator
+{
+    public new const string Equals = "=";
+    public const string NotEquals = "!=";
+    public const string GreaterThan = ">";
+    public const string LessThan = "<";
+    public const string GreaterThanOrEquals = ">=";
+    public const string LessThanOrEquals = "<=";
+    public const string Like = "LIKE";
+    public const string NotLike = "NOT LIKE";
+    public const string IsNull = "IS NULL";
+    public const string IsNotNull = "IS NOT NULL";
+
+    public static string[] All = new[]
+    {
+        Equals,
+        NotEquals,
+        GreaterThan,
+        LessThan,
+        GreaterThanOrEquals,
+        LessThanOrEquals,
+        Like,
+        NotLike,
+        IsNull,
+        IsNotNull,
+    };
+}
+
+public class DataFilters
+{
+    public string Column { get; set; } = null!;
+    public string Operator { get; set; } = null!;
+    public string? Value { get; set; }
+}
 
 enum TableColumnType
 {
@@ -103,158 +137,75 @@ partial class SqlHelpers
         };
     }
 
-    public static string GetComparatorForValue(object? value)
+    public static string CreateComparator(object? value)
     {
         if (value is null)
         {
-            return "IS";
+            return $"{Operator.IsNull}";
         }
 
-        return "=";
+        return $"{Operator.Equals} {EscapeSqlValue(value)}";
     }
 
-    public static string GenerateSelect(string tableName, IDictionary<string, object?> conditions)
+    public static string FilterToSql(DataFilters filter)
     {
-        var wherePart =
-            "WHERE "
-            + string.Join(
-                " AND ",
-                conditions
-                    .AsEnumerable()
-                    .Select(
-                        pair =>
-                            $"{EscapeIdentity(pair.Key)} {GetComparatorForValue(pair.Value)} {EscapeSqlValue(pair.Value)}"
-                    )
-                    .ToArray()
-            );
+        if (!Operator.All.Contains(filter.Operator.ToUpper()))
+        {
+            throw new ArgumentException("Unsupported operator, " + filter.Operator);
+        }
 
-        return $"SELECT * FROM {tableName} {
-            (conditions.Count > 0 ? wherePart : "")
-        }";
+        if (filter.Operator.ToUpper() is Operator.IsNull or Operator.IsNotNull)
+        {
+            return $"{EscapeIdentity(filter.Column)} {filter.Operator}";
+        }
+        return $"{EscapeIdentity(filter.Column)} {filter.Operator} {EscapeSqlValue(filter.Value)}";
     }
 
-    public static string GenerateInsert(string tableName, IDictionary<string, object?> values)
+    public static string GenerateSelect(
+        string tableName,
+        IEnumerable<DataFilters> filters,
+        int limit,
+        int offset
+    )
+    {
+        var filtersArray = filters.Select(FilterToSql).ToArray();
+        var filtersPart = string.Join(" AND ", filtersArray);
+        var wherePart = filtersPart.Length > 0 ? $"WHERE {filtersPart}" : "";
+        return $"SELECT * FROM {tableName} {wherePart} LIMIT {limit} OFFSET {offset}";
+    }
+
+    public static string GenerateInsert(string tableName, TableData values)
     {
         var columns = string.Join(", ", values.Keys.Select(EscapeIdentity).ToArray());
-
         var valuesPart = string.Join(", ", values.Values.Select(EscapeSqlValue).ToArray());
-
         return $"INSERT INTO {tableName} ({columns}) VALUES ({valuesPart})";
     }
 
-    public static string GenerateUpdate(
-        string tableName,
-        IDictionary<string, object?> where,
-        IDictionary<string, object?> values
-    )
+    public static string GenerateUpdate(string tableName, TableData oldValues, TableData newValues)
     {
-        var wherePart = string.Join(
-            " AND ",
-            where
-                .AsEnumerable()
-                .Select(
-                    pair =>
-                        $"{EscapeIdentity(pair.Key)} {GetComparatorForValue(pair.Value)} {EscapeSqlValue(pair.Value)}"
-                )
-                .ToArray()
-        );
+        var oldValuesArray = oldValues
+            .Select(static pair => $"{EscapeIdentity(pair.Key)} {CreateComparator(pair.Value)}")
+            .ToArray();
+        var oldValuesPart = string.Join(" AND ", oldValuesArray);
 
-        var setPart = string.Join(
+        var newValuesArray = newValues.ToArray();
+        var newValuesPart = string.Join(
             ", ",
-            values
-                .AsEnumerable()
-                .Select(pair => $"{EscapeIdentity(pair.Key)} = {EscapeSqlValue(pair.Value)}")
-                .ToArray()
+            newValuesArray.Select(
+                static pair => $"{EscapeIdentity(pair.Key)} = {EscapeSqlValue(pair.Value)}"
+            )
         );
 
-        return $"UPDATE {tableName} SET {setPart} WHERE {wherePart}";
+        return $"UPDATE {tableName} SET {newValuesPart} WHERE {oldValuesPart}";
     }
 
-    public static string GenerateDelete(string tableName, IDictionary<string, object?> where)
+    public static string GenerateDelete(string tableName, TableData where)
     {
-        var wherePart = string.Join(
-            " AND ",
-            where
-                .AsEnumerable()
-                .Select(
-                    pair =>
-                        $"{EscapeIdentity(pair.Key)} {GetComparatorForValue(pair.Value)} {EscapeSqlValue(pair.Value)}"
-                )
-                .ToArray()
-        );
+        var valuesArray = where
+            .Select(static pair => $"{EscapeIdentity(pair.Key)} {CreateComparator(pair.Value)}")
+            .ToArray();
+        var wherePart = string.Join(" AND ", valuesArray);
 
         return $"DELETE FROM {tableName} WHERE {wherePart}";
     }
-
-    // public static bool Tests()
-    // {
-    //     // I wont write tests separately for this file
-
-    //     // test escape sql
-    //     if (EscapeSqlString("test") != "'test'")
-    //         return false;
-    //     if (EscapeSqlString("There are 'two' single quote") != "'There are ''two'' single quote'")
-    //         return false;
-    //     if (EscapeSqlBinay(new byte[] { 0x01, 0x02 }) != "X'0102'")
-    //         return false;
-    //     if (EscapeSqlValue("test") != "'test'")
-    //         return false;
-    //     if (EscapeSqlValue(new byte[] { 0x01, 0x02 }) != "X'0102'")
-    //         return false;
-    //     if (EscapeSqlValue(1) != "1")
-    //         return false;
-
-    //     // test escape identity
-    //     if (EscapeIdentity("col\"name") != "\"col\"\"name\"")
-    //         return false;
-
-    //     // test unescape sql
-    //     if (UnescapeIdentity("\"test\"") != "test")
-    //         return false;
-    //     if (UnescapeIdentity("\"\"\"\"") != "\"")
-    //         return false;
-
-    //     // test escape binary
-    //     if (EscapeSqlBinay(new byte[] { 0x01, 0x02 }) != "X'0102'")
-    //         return false;
-
-    //     // test unescape identity
-    //     if (UnescapeIdentity("\"test\"") != "test")
-    //         return false;
-    //     if (UnescapeIdentity("us\"\"ers") != "us\"ers")
-    //         return false;
-
-    //     // test GenerateSelectWithCondition
-    //     if (
-    //         GenerateSelectWithCondition("table", new Dictionary<string, object?> { { "id", 1 } })
-    //         != "SELECT * FROM table WHERE \"id\" = 1"
-    //     )
-    //         return false;
-
-    //     // test GenerateInsert
-    //     if (
-    //         GenerateInsert("table", new Dictionary<string, object?> { { "id", 1 } })
-    //         != "INSERT INTO table (\"id\") VALUES (1)"
-    //     )
-    //         return false;
-
-    //     // test GenerateUpdate
-    //     if (
-    //         GenerateUpdate(
-    //             "table",
-    //             new Dictionary<string, object?> { { "id", 1 } },
-    //             new Dictionary<string, object?> { { "name", "test" } }
-    //         ) != "UPDATE table SET \"name\" = 'test' WHERE \"id\" = 1"
-    //     )
-    //         return false;
-
-    //     // test GenerateDelete
-    //     if (
-    //         GenerateDelete("table", new Dictionary<string, object?> { { "id", 1 } })
-    //         != "DELETE FROM table WHERE \"id\" = 1"
-    //     )
-    //         return false;
-
-    //     return true;
-    // }
 }

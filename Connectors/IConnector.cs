@@ -1,4 +1,5 @@
 using squi.Models;
+using squi.Utils;
 
 namespace squi.Connectors;
 
@@ -44,9 +45,9 @@ public interface IConnector
     /// <summary>
     /// Gets the data from a table. This method should support filtering, limiting and offsetting.
     /// </summary>
-    Task<IEnumerable<TableData>> GetTableData(
+    Task<Result> SelectData(
         string tableName,
-        IDictionary<string, object?> filters,
+        IEnumerable<DataFilters> filters,
         int limit = 50,
         int offset = 0
     );
@@ -57,9 +58,10 @@ public interface IConnector
     Task<Result> InsertData(string tableName, TableData data);
 
     /// <summary>
-    /// Updates data in a table. The data should be a dictionary with the column names as keys.
+    /// Updates data in a table. The data will be modified using the oldData dictionary as a filter.
+    /// The newData dictionary will be used to update the data.
     /// </summary>
-    Task<Result> UpdateData(string tableName, TableData data);
+    Task<Result> UpdateData(string tableName, TableData oldData, TableData newData);
 
     /// <summary>
     /// Deletes data from a table. The data should be a dictionary with the column names as keys.
