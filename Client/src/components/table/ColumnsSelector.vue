@@ -16,14 +16,6 @@ import {
 } from "@/components/ui/popover";
 import { CheckIcon, SlidersHorizontal } from "lucide-vue-next";
 
-interface Props {
-  allColumns: string[];
-  displayedColumns: string[] | undefined;
-  toggleColumn: (col: string) => void;
-}
-
-const { allColumns, displayedColumns, toggleColumn } = defineProps<Props>();
-
 const filterFunction = (list: any[], term: string) =>
   list.filter((i) => i.toLowerCase()?.includes(term.toLowerCase()));
 </script>
@@ -38,9 +30,7 @@ const filterFunction = (list: any[], term: string) =>
       >
         <SlidersHorizontal :size="16" />
         Columns
-        <!-- icon when not all columns are selected! -->
         <div
-          v-if="displayedColumns && displayedColumns.length < allColumns.length"
           class="absolute top-0 right-0 -mt-1 -mr-1 flex items-center justify-center w-4 h-4 bg-primary text-primary-foreground rounded-full"
         >
           !
@@ -48,30 +38,11 @@ const filterFunction = (list: any[], term: string) =>
       </Button>
     </PopoverTrigger>
     <PopoverContent class="w-[200px] p-0">
-      <Command
-        v-if="displayedColumns"
-        :multiple="true"
-        :filter-function="filterFunction"
-      >
+      <Command :multiple="true" :filter-function="filterFunction">
         <div class="px-2 py-2 flex items-center justify-between">
           <h3 class="text-sm font-semibold">Toggle columns</h3>
-          <Button
-            variant="link"
-            size="sm"
-            class="h-5"
-            @click="
-              toggleColumn(
-                displayedColumns.length === allColumns.length
-                  ? '__none'
-                  : '__all'
-              )
-            "
-          >
-            {{
-              displayedColumns.length === allColumns.length
-                ? "Hide all"
-                : "Show all"
-            }}
+          <Button variant="link" size="sm" class="h-5" @click="">
+            {{ "Show all" }}
           </Button>
         </div>
         <CommandSeparator />
@@ -84,15 +55,10 @@ const filterFunction = (list: any[], term: string) =>
         <CommandList :align="'start'">
           <CommandEmpty>No columns found</CommandEmpty>
           <CommandGroup class="max-h-60 overflow-y-auto">
-            <template v-for="col in allColumns" :key="col">
-              <CommandItem :value="col" @click="toggleColumn(col)">
+            <template v-for="col in []" :key="col">
+              <CommandItem :value="col" @click="">
                 <div
                   class="mr-2 flex h-4 w-4 items-center justify-center rounded-sm"
-                  :class="
-                    displayedColumns.includes(col)
-                      ? 'bg-primary text-primary-foreground'
-                      : 'bg-gray-200 [&_svg]:invisible'
-                  "
                 >
                   <CheckIcon class="size-4" />
                 </div>

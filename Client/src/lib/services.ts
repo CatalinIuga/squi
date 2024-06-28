@@ -1,20 +1,57 @@
-import { ApiResponse, TableSchema } from "./types";
+import { ApiResponse, DataFilter, Result, TableSchema } from "./types";
+import { errorToResult } from "./utils";
 
 // TODO: Clean this stuff up, could also try to use a vite proxy
 
 const baseURI = import.meta.env.VITE_BASE_URI;
 
-export const getTables = async () => {
-  const response = await fetch(`${baseURI}/tables`);
-  const tables = (await response.json()) as string[];
-  return tables;
-};
+export async function fetchTables(): Promise<Result<string[]>> {
+  try {
+    const response = await fetch(`${baseURI}/tables`);
+    const tables = (await response.json()) as string[];
+    return { ok: true, data: tables };
+  } catch (error) {
+    return errorToResult(error);
+  }
+}
 
-export const getTableSchema = async (tableName: string) => {
-  const response = await fetch(`${baseURI}/tables/${tableName}`);
-  const table = (await response.json()) as TableSchema;
-  return table;
-};
+export async function fetchTableSchema(
+  table: string
+): Promise<Result<TableSchema>> {
+  try {
+    const response = await fetch(`${baseURI}/tables/${table}`);
+    const schema = (await response.json()) as TableSchema;
+    return { ok: true, data: schema };
+  } catch (error) {
+    return errorToResult(error);
+  }
+}
+
+export async function fetchTableData(
+  tableName: string,
+  filters: DataFilter[] = [],
+  limit: number = 50,
+  offset: number = 0
+): Promise<Result<Record<string, any>[]>> {
+  try {
+    const url = new URL(`${baseURI}/tables/${tableName}/select`);
+    url.searchParams.append("limit", limit.toString());
+    url.searchParams.append("offset", offset.toString());
+
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(filters),
+    });
+
+    const tableData = (await response.json()) as Record<string, any>[];
+    return { ok: true, data: tableData };
+  } catch (error) {
+    return errorToResult(error);
+  }
+}
 
 export const getTableData = async (
   tableName: string,

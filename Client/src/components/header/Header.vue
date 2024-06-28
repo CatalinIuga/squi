@@ -1,15 +1,17 @@
 <script setup lang="ts">
 import Logo from "@/components/header/Logo.vue";
-import OpenTables from "@/components/header/OpenTables.vue";
-import RefreshButton from "@/components/header/RefreshButton.vue";
-import SettingsButton from "@/components/header/SettingsButton.vue";
+import OpenTable from "@/components/header/OpenTable.vue";
+import OpenTablesList from "@/components/header/OpenTableList.vue";
+import RefreshButton from "@/components/header/Refresh.vue";
+import SettingsButton from "@/components/header/Settings.vue";
 </script>
 
 <template>
-  <header class="mx-auto flex h-[50px] items-center gap-2 border-b-[1px] px-4">
+  <div class="mx-auto flex h-[50px] items-center gap-2 border-b-[1px] px-4">
     <Logo />
     <RefreshButton />
-    <OpenTables />
+    <OpenTable />
+    <OpenTablesList />
     <SettingsButton />
-  </header>
+  </div>
 </template>

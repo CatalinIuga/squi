@@ -65,6 +65,7 @@
     --border: 240 3.7% 15.9%;
     --input: 240 3.7% 15.9%;
     --ring: 240 4.9% 83.9%;
+    --radius: 0.5rem;
   }
 }
 
@@ -150,20 +151,28 @@
 
 /* for selection checkboxes */
 .ag-theme-quartz .ag-column-first,
-.ag-theme-quartz-dark .ag-column-first,
+.ag-theme-quartz-dark .ag-column-first {
+  @apply !px-1 !py-1;
+}
+
 .ag-theme-quartz .ag-column-first.ag-cell-focus,
 .ag-theme-quartz-dark .ag-column-first.ag-cell-focus {
-  @apply !pt-0;
+  @apply !py-[3px] !px-[3px];
 }
 
 .ag-theme-quartz .ag-cell-focus,
 .ag-theme-quartz-dark .ag-cell-focus {
-  @apply !border-2 !border-[#66afe9] !pt-[3px] !px-[3px];
+  @apply !border-2 !border-[#66afe9] !py-[3px] !px-[3px] !rounded-none;
 }
 
-.ag-theme-quartz .ag-cell-inline-editing,
-.ag-theme-quartz-dark .ag-cell-inline-editing {
-  @apply !border-2 !border-[#66afe9] !py-0 !px-0 !rounded-none;
+.ag-theme-quartz .ag-cell-wrapper,
+.ag-theme-quartz-dark .ag-cell-wrapper {
+  @apply !px-[1px];
+}
+
+.ag-theme-quartz .ag-header-cell,
+.ag-theme-quartz-dark .ag-header-cell {
+  @apply !px-[6px];
 }
 
 /* change the cell inline editing border to red when the input is invalid */
@@ -174,7 +183,7 @@
 
 .ag-theme-quartz .ag-cell-inline-editing input,
 .ag-theme-quartz-dark .ag-cell-inline-editing input {
-  @apply !border-none !bg-transparent !text-foreground !w-full !h-full !px-[3px] !pt-[3px] !rounded-none;
+  @apply !border-none !bg-transparent !text-foreground !w-full !h-full !p-0 !rounded-none;
 }
 
 .ag-theme-quartz .ag-header-cell-label,

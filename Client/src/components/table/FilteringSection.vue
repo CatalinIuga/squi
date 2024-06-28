@@ -10,13 +10,6 @@ import { Input } from "@/components/ui/input";
 import { ChevronDownIcon, InfoIcon, XIcon } from "lucide-vue-next";
 import { ref, watch } from "vue";
 
-interface Props {
-  show: boolean;
-  columns: string[];
-}
-
-defineProps<Props>();
-
 const operations = {
   eq: {
     label: "equals",
@@ -101,10 +94,7 @@ defineExpose({ filters, filtersDict });
 </script>
 
 <template>
-  <section
-    v-if="show"
-    class="flex justify-between gap-2 px-4 py-2 border-b-[1px]"
-  >
+  <section class="flex justify-between gap-2 px-4 py-2 border-b-[1px]">
     <div v-if="filters.length === 0" class="flex items-center gap-1">
       <InfoIcon :size="16" />
       <p class="text-sm">Use the filters to narrow down the results</p>
@@ -129,7 +119,7 @@ defineExpose({ filters, filtersDict });
           <DropdownMenuContent>
             <div class="w-52 max-h-64 normal-scrollbar overflow-y-auto">
               <DropdownMenuItem
-                v-for="column in columns"
+                v-for="column in []"
                 :key="column"
                 @click="filter.column = column"
               >
@@ -189,9 +179,6 @@ defineExpose({ filters, filtersDict });
           class="flex items-center text-sm gap-2"
           variant="default"
           size="sm"
-          @click="
-            filters.push({ column: columns[0], operator: 'eq', value: '' })
-          "
         >
           Add filter
         </Button>
