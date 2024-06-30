@@ -26,7 +26,6 @@ builder.Services.AddDirectoryBrowser();
 var app = builder.Build();
 
 app.UseStaticFiles();
-handle exceptions & actual cors policy
 app.UseCors(o => o.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());
 
 app.MapControllers();
