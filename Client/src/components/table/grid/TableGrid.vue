@@ -31,7 +31,7 @@ const gridOptions: GridOptions = {
   suppressRowClickSelection: true,
 };
 
-function setColDefs() {
+function setColDefs(): ColDef[] {
   if (!columns.value) return [];
 
   const baseColDefs: ColDef[] = columns.value.map((col) => {
@@ -64,7 +64,7 @@ function setColDefs() {
   return baseColDefs;
 }
 
-function setRowData() {
+function setRowData(): Record<string, any>[] {
   if (!data.value) return [];
 
   return data.value;

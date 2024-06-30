@@ -2,27 +2,6 @@ using System.Data;
 
 namespace squi.Models;
 
-public class RelationshipSchema
-{
-    public string Table { get; set; } = null!;
-    public string Column { get; set; } = null!;
-    public string ReferenceTable { get; set; } = null!;
-    public string ReferenceColumn { get; set; } = null!;
-
-    public RelationshipSchema(
-        string table,
-        string column,
-        string referenceTable,
-        string referenceColumn
-    )
-    {
-        Table = table;
-        Column = column;
-        ReferenceTable = referenceTable;
-        ReferenceColumn = referenceColumn;
-    }
-}
-
 /// <summary>
 /// Represents a database table, with its columns.
 /// </summary>
@@ -40,9 +19,9 @@ public class TableSchema
     /// </summary>
     public IEnumerable<ColumnSchema> Columns { get; set; } = new List<ColumnSchema>();
 
-    public IEnumerable<RelationshipSchema> Relationships { get; set; } =
-        new List<RelationshipSchema>();
-
+    /// <summary>
+    /// Creates a new instance of the <see cref="TableSchema"/> class from a <see cref="DataTable"/>.
+    /// </summary>
     public TableSchema(DataTable data, int rowCount)
     {
         RowCount = rowCount;

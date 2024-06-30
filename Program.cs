@@ -26,8 +26,7 @@ builder.Services.AddDirectoryBrowser();
 var app = builder.Build();
 
 app.UseStaticFiles();
-
-// TODO: Add a middleware to handle exceptions & actual cors policy
+handle exceptions & actual cors policy
 app.UseCors(o => o.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());
 
 app.MapControllers();
