@@ -5,7 +5,7 @@ import { TableSchema } from "./types";
 
 export const useSquiStore = defineStore("squi", () => {
   // REFERENCE VARIABLES
-  const table = ref<string | null>(null);
+  const table = ref<string | null>(localStorage.getItem("table"));
   const tableSchema = ref<TableSchema | null>(null);
   const tableData = ref<Record<string, any>[]>([]);
 
@@ -15,7 +15,7 @@ export const useSquiStore = defineStore("squi", () => {
   // STATE VARIABLES
   const loading = ref(false);
   const error = ref<string | null>(null);
-  const openMenu = ref(false);
+  const openMenu = ref(true);
 
   // SETTERS
   function setTable(value: string | null) {
@@ -56,9 +56,11 @@ export const useSquiStore = defineStore("squi", () => {
   // WATCHERS
   watch(table, (value) => {
     if (value) {
+      localStorage.setItem("table", value);
       getTableSchema();
       getTableData();
     } else {
+      localStorage.removeItem("table");
       tableSchema.value = null;
       tableData.value = [];
     }

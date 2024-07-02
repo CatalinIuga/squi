@@ -113,9 +113,9 @@
   --ag-control-panel-background-color: hsl(var(--secondary));
   --ag-side-button-selected-background-color: hsl(var(--secondary));
   --ag-header-column-resize-handle-display: none;
-  --ag-selected-row-background-color: hsl(var(--muted));
+  --ag-selected-row-background-color: #353535;
   --ag-modal-overlay-background-color: hsl(var(--popover));
-  --ag-row-hover-color: hsl(var(--muted));
+  --ag-row-hover-color: #181818;
   --ag-grid-size: 3px;
   --ag-row-height: 32px;
   --ag-list-item-height: 20px;
