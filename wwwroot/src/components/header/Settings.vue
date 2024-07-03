@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import ThemeSwitcher from "@/components/header/ThemeSwitcher.vue";
+import ThemeSwitcher from "@/components/sidebar/ThemeSwitcher.vue";
 import { Button } from "@/components/ui/button";
 import { DownloadIcon } from "lucide-vue-next";
 </script>

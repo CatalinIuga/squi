@@ -10,7 +10,7 @@ public class ClientController : ControllerBase
     public IActionResult Index()
     {
         var assembly = System.Reflection.Assembly.GetExecutingAssembly();
-        var resourceStream = assembly.GetManifestResourceStream("squi.wwwroot.index.html");
+        var resourceStream = assembly.GetManifestResourceStream("squi.wwwroot.dist.index.html");
 
         if (resourceStream is null)
             return NotFound();
@@ -24,7 +24,7 @@ public class ClientController : ControllerBase
     public IActionResult Assets(string path)
     {
         var assembly = System.Reflection.Assembly.GetExecutingAssembly();
-        var resourceStream = assembly.GetManifestResourceStream($"squi.wwwroot.assets.{path}");
+        var resourceStream = assembly.GetManifestResourceStream($"squi.wwwroot.dist.assets.{path}");
 
         if (resourceStream is null)
             return NotFound();

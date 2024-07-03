@@ -88,6 +88,8 @@
   --input: 240 5.9% 90%;
   --ring: 240 5.9% 10%;
   --radius: 0.5rem;
+  --row-selected-bg-color: #f8f8f8;
+  --row-hover-bg-color: #f0f0f0;
 }
 
 .ag-theme-quartz-dark {
@@ -95,6 +97,8 @@
   --input: 240 3.7% 15.9%;
   --ring: 240 4.9% 83.9%;
   --radius: 0.5rem;
+  --row-selected-bg-color: #353535;
+  --row-hover-bg-color: #181818;
 }
 
 .ag-theme-quartz,
@@ -113,9 +117,9 @@
   --ag-control-panel-background-color: hsl(var(--secondary));
   --ag-side-button-selected-background-color: hsl(var(--secondary));
   --ag-header-column-resize-handle-display: none;
-  --ag-selected-row-background-color: #353535;
+  --ag-selected-row-background-color: var(--row-selected-bg-color);
   --ag-modal-overlay-background-color: hsl(var(--popover));
-  --ag-row-hover-color: #181818;
+  --ag-row-hover-color: var(--row-hover-bg-color);
   --ag-grid-size: 3px;
   --ag-row-height: 32px;
   --ag-list-item-height: 20px;
@@ -185,6 +189,11 @@
 .ag-theme-quartz-dark .ag-cell-inline-editing input {
   @apply !border-none !bg-transparent !text-foreground !w-full !h-full !p-0 !rounded-none;
 }
+
+/* .ag-theme-quartz .ag-cell-inline-editing,
+.ag-theme-quartz-dark .ag-cell-inline-editing {
+  @apply !border-none  !text-foreground !px-[5px] !py-1 !text-xs !rounded-none;
+} */
 
 .ag-theme-quartz .ag-header-cell-label,
 .ag-theme-quartz-dark .ag-header-cell-label {
