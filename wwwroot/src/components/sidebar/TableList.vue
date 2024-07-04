@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import DownloadTrigger from "@/components/sidebar/DownloadTrigger.vue";
 import ThemeSwitcher from "@/components/sidebar/ThemeSwitcher.vue";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -56,9 +57,9 @@ watch(filterTables, updateFilteredTables);
     <div class="p-2 border-t">
       <Button size="sm" variant="outline" class="w-full">Add Table</Button>
     </div>
-    <div class="flex items-center border-t p-1">
+    <div class="flex items-center gap-2 border-t py-1 px-2">
       <ThemeSwitcher />
-      <!-- Maybe add connection info here? -->
+      <DownloadTrigger />
     </div>
   </div>
 </template>

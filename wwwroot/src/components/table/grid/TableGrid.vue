@@ -3,6 +3,7 @@ import { useSquiStore } from "@/lib/store";
 import { ClientSideRowModelModule } from "@ag-grid-community/client-side-row-model";
 import { ColDef, GridOptions, ModuleRegistry } from "@ag-grid-community/core";
 import { AgGridVue } from "@ag-grid-community/vue3";
+import { Loader2Icon } from "lucide-vue-next";
 import { computed, onMounted, ref, watch } from "vue";
 
 import "@ag-grid-community/styles/ag-grid.css";
@@ -14,6 +15,7 @@ ModuleRegistry.registerModules([ClientSideRowModelModule]);
 const mode = useColorMode();
 const store = useSquiStore();
 
+const loading = computed(() => store.loading);
 const data = computed(() => store.tableData);
 const columns = computed(() => store.tableSchema?.columns);
 
@@ -85,7 +87,16 @@ watch([data, columns], () => {
 </script>
 
 <template>
-  <output class="h-full overflow-auto pb-12">
+  <div
+    v-if="loading"
+    class="absolute flex items-center justify-center w-full h-full"
+    role="status"
+  >
+    <Loader2Icon class="size-20 text-primary animate-spin" />
+    <span class="sr-only">Loading...</span>
+  </div>
+
+  <output v-else class="h-full overflow-auto pb-12">
     <AgGridVue
       class="!rounded-none"
       :class="{

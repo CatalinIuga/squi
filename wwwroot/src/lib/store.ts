@@ -26,31 +26,31 @@ export const useSquiStore = defineStore("squi", () => {
     openMenu.value = value;
   }
 
-  function setOffset(value: number) {
-    offset.value = value;
-  }
-
-  function setLimit(value: number) {
-    limit.value = value;
-  }
-
   // FETCHERS - this might actually not be needed here...
   function getTableSchema() {
     if (!table.value) return;
-    loading.value = true;
     fetchTableSchema(table.value).then(
       (r) => (tableSchema.value = r.ok ? r.data : null)
     );
-    loading.value = false;
   }
 
   function getTableData() {
     if (!table.value) return;
+
     loading.value = true;
-    fetchTableData(table.value).then(
-      (r) => (tableData.value = r.ok ? r.data : [])
-    );
-    loading.value = false;
+    fetchTableData(table.value, [], limit.value, offset.value)
+      .then((r) => {
+        tableData.value = r.ok ? r.data : [];
+        loading.value = false;
+      })
+      .catch((e) => {
+        error.value = e.message;
+        loading.value = false;
+      });
+  }
+
+  function refreshTableData() {
+    getTableData();
   }
 
   // WATCHERS
@@ -66,6 +66,12 @@ export const useSquiStore = defineStore("squi", () => {
     }
   });
 
+  // main watcher for table data
+  watch([offset, limit], () => {
+    if (!table.value) return;
+    getTableData();
+  });
+
   return {
     table,
     setTable,
@@ -75,9 +81,8 @@ export const useSquiStore = defineStore("squi", () => {
     getTableData,
 
     offset,
-    setOffset,
     limit,
-    setLimit,
+    refreshTableData,
 
     loading,
     error,

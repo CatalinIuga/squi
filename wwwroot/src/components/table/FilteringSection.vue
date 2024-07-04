@@ -84,8 +84,6 @@ watch(
           operations[filter.operator].hasValue ? `'${filter.value}'` : ""
         }`
     );
-
-    console.log(filtersDict.value);
   },
   { deep: true }
 );
@@ -94,7 +92,10 @@ defineExpose({ filters, filtersDict });
 </script>
 
 <template>
-  <section class="flex justify-between gap-2 px-4 py-2 border-b-[1px]">
+  <section
+    v-if="false"
+    class="flex justify-between gap-2 px-4 py-2 border-b-[1px]"
+  >
     <div v-if="filters.length === 0" class="flex items-center gap-1">
       <InfoIcon :size="16" />
       <p class="text-sm">Use the filters to narrow down the results</p>

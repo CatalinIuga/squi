@@ -1,5 +1,5 @@
-@import url("https://fonts.cdnfonts.com/css/menlo");
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap");
+@import url("https://fonts.cdnfonts.com/css/jetbrains-mono");
+@import url("https://fonts.cdnfonts.com/css/noto-sans-mono");
 
 @tailwind base;
 @tailwind components;
@@ -75,7 +75,7 @@
   }
 
   body {
-    @apply bg-background text-foreground font-inter;
+    @apply bg-background text-foreground font-base;
   }
 
   #app {
@@ -88,8 +88,8 @@
   --input: 240 5.9% 90%;
   --ring: 240 5.9% 10%;
   --radius: 0.5rem;
-  --row-selected-bg-color: #f8f8f8;
-  --row-hover-bg-color: #f0f0f0;
+  --row-selected-bg-color: #f3f3f3;
+  --row-hover-bg-color: #e8e8e8;
 }
 
 .ag-theme-quartz-dark {
@@ -136,7 +136,7 @@
   --ag-cell-horizontal-border: solid var(--border);
   --ag-header-column-separator-display: block;
   --ag-input-focus-box-shadow: none;
-  @apply h-full w-full font-menlo;
+  @apply h-full w-full font-mono;
 }
 .ag-theme-quartz .ag-root-wrapper,
 .ag-theme-quartz-dark .ag-root-wrapper {

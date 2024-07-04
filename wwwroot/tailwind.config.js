@@ -80,8 +80,8 @@ module.exports = {
         },
       },
       fontFamily: {
-        menlo: ["Menlo", "monospace"],
-        inter: ["Inter", "sans-serif"],
+        mono: ["JetBrains Mono", "monospace"],
+        base: ["Noto Sans Mono", "sans-serif"],
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
