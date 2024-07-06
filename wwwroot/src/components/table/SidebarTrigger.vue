@@ -6,7 +6,7 @@ import { computed } from "vue";
 
 const store = useSquiStore();
 
-const openMenu = computed(() => store.openMenu);
+const showSidebar = computed(() => store.showSidebar);
 </script>
 
 <template>
@@ -14,9 +14,9 @@ const openMenu = computed(() => store.openMenu);
     variant="outline"
     class="size-8"
     size="icon"
-    @click="store.setOpenMenu(!openMenu)"
+    @click="store.setShowSidebar(!showSidebar)"
   >
-    <PanelLeftCloseIcon :size="17" v-if="openMenu" />
+    <PanelLeftCloseIcon :size="17" v-if="showSidebar" />
     <PanelLeftOpenIcon :size="17" v-else />
   </Button>
 </template>

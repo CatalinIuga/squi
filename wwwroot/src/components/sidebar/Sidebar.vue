@@ -6,12 +6,12 @@ import { useSquiStore } from "@/lib/store";
 import { computed } from "vue";
 
 const store = useSquiStore();
-const openMenu = computed(() => store.openMenu);
+const showSidebar = computed(() => store.showSidebar);
 </script>
 
 <template>
   <aside
-    v-show="openMenu"
+    v-show="showSidebar"
     class="flex min-w-[0] max-w-[20%] grow flex-col border border-border bg-background border-y-0 border-l-0"
   >
     <OpenSqlEditor />

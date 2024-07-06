@@ -84,12 +84,12 @@
 }
 
 .ag-theme-quartz {
-  --border: #e5e5e5;
+  --border: hsl(240 5.9% 90%);
   --input: 240 5.9% 90%;
   --ring: 240 5.9% 10%;
   --radius: 0.5rem;
-  --row-selected-bg-color: #f3f3f3;
-  --row-hover-bg-color: #e8e8e8;
+  --row-selected-bg-color: #e3e3e350;
+  --row-hover-bg-color: #f0f0f0;
 }
 
 .ag-theme-quartz-dark {

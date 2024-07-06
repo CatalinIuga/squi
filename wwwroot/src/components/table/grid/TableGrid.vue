@@ -19,7 +19,7 @@ const loading = computed(() => store.loading);
 const data = computed(() => store.tableData);
 const columns = computed(() => store.tableSchema?.columns);
 
-const colDefs = ref<ColDef[]>([]);
+const columnDefs = ref<ColDef[]>([]);
 const rowData = ref<any[]>([]);
 
 const gridOptions: GridOptions = {
@@ -76,12 +76,12 @@ onMounted(() => {
   store.getTableData();
   store.getTableSchema();
 
-  colDefs.value = setColDefs();
+  columnDefs.value = setColDefs();
   rowData.value = setRowData();
 });
 
 watch([data, columns], () => {
-  colDefs.value = setColDefs();
+  columnDefs.value = setColDefs();
   rowData.value = setRowData();
 });
 </script>
@@ -103,9 +103,9 @@ watch([data, columns], () => {
         'ag-theme-quartz': mode === 'light',
         'ag-theme-quartz-dark': mode === 'dark',
       }"
-      :gridOptions="gridOptions"
-      :columnDefs="colDefs"
-      :rowData="rowData"
+      :gridOptions
+      :rowData
+      :columnDefs
     />
   </output>
 </template>

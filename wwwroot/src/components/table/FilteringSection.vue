@@ -7,93 +7,27 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
+import { useSquiStore } from "@/lib/store";
+import { Operator } from "@/lib/types";
 import { ChevronDownIcon, InfoIcon, XIcon } from "lucide-vue-next";
-import { ref, watch } from "vue";
+import { computed } from "vue";
 
-const operations = {
-  eq: {
-    label: "equals",
-    value: "=",
-    hasValue: true,
-  },
-  neq: {
-    label: "not equals",
-    value: "<>",
-    hasValue: true,
-  },
-  gt: {
-    label: "greater",
-    value: ">",
-    hasValue: true,
-  },
-  gte: {
-    label: "greater or equals",
-    value: ">=",
-    hasValue: true,
-  },
-  lt: {
-    label: "less",
-    value: "<",
-    hasValue: true,
-  },
-  lte: {
-    label: "less or equals",
-    value: "<=",
-    hasValue: true,
-  },
-  isNull: {
-    label: "is null",
-    value: "IS NULL",
-    hasValue: false,
-  },
-  isNotNull: {
-    label: "is not null",
-    value: "IS NOT NULL",
-    hasValue: false,
-  },
+const store = useSquiStore();
 
-  like: {
-    label: "like",
-    value: "LIKE",
-    hasValue: true,
-  },
-  notLike: {
-    label: "not like",
-    value: "NOT LIKE",
-    hasValue: true,
-  },
-};
-
-type Filter = {
-  column: string;
-  operator: keyof typeof operations;
-  value?: string | number;
-};
-
-// this might need to go to a global store
-const filters = ref<Filter[]>([]);
-
-const filtersDict = ref<string[]>([]);
-
-watch(
-  filters.value,
-  (value) => {
-    filtersDict.value = value.map(
-      (filter) =>
-        `${filter.column} ${operations[filter.operator].value} ${
-          operations[filter.operator].hasValue ? `'${filter.value}'` : ""
-        }`
-    );
-  },
-  { deep: true }
+const columnsNames = computed(
+  () =>
+    store.tableSchema?.columns
+      .map((col) => col.name)
+      .filter((col) => col !== undefined) as string[]
 );
 
-defineExpose({ filters, filtersDict });
+const filters = computed(() => store.filters);
+const showFilters = computed(() => store.showFilters);
 </script>
 
 <template>
   <section
-    v-if="false"
+    v-if="showFilters"
     class="flex justify-between gap-2 px-4 py-2 border-b-[1px]"
   >
     <div v-if="filters.length === 0" class="flex items-center gap-1">
@@ -106,7 +40,7 @@ defineExpose({ filters, filtersDict });
         :key="index"
         class="flex items-center gap-2"
       >
-        <div class="rounded-md px-4 py-2 border">where</div>
+        <div class="rounded-md px-4 py-2 border cursor-not-allowed">where</div>
         <DropdownMenu>
           <DropdownMenuTrigger as-child>
             <Button
@@ -120,7 +54,7 @@ defineExpose({ filters, filtersDict });
           <DropdownMenuContent>
             <div class="w-52 max-h-64 normal-scrollbar overflow-y-auto">
               <DropdownMenuItem
-                v-for="column in []"
+                v-for="column in columnsNames"
                 :key="column"
                 @click="filter.column = column"
               >
@@ -136,27 +70,37 @@ defineExpose({ filters, filtersDict });
               class="flex items-center w-40 justify-between px-2"
               variant="outline"
             >
-              {{ operations[filter.operator].label }}
+              {{ filter.operator }}
               <ChevronDownIcon class="size-4" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent class="w-56">
             <DropdownMenuItem
-              class="flex justify-between items-center"
-              v-for="(operation, key) in operations"
-              :key="key"
-              @click="filter.operator = key"
+              class="flex justify-between items-center hover:bg-muted/60"
+              v-for="(op, str) in Operator"
+              :key="str"
+              @click="filter.operator = op"
             >
-              {{ operation.label }}
-              <span class="bg-secondary shadow-sm text-xs rounded-md py-1 px-2">
-                {{ operation.value }}
+              {{
+                str
+                  .replace(/([A-Z])/g, " $1")
+                  .toLowerCase()
+                  .trim()
+              }}
+              <span
+                class="bg-secondary border dark:border-background shadow-sm text-xs rounded-md py-1 px-2"
+              >
+                {{ op }}
               </span>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
 
         <Input
-          v-if="operations[filter.operator].hasValue"
+          v-if="
+            filter.operator !== Operator.IsNull &&
+            filter.operator !== Operator.IsNotNull
+          "
           placeholder="Value"
           v-model="filter.value"
           class="w-[200px] rounded-md px-2 py-1"
@@ -167,7 +111,7 @@ defineExpose({ filters, filtersDict });
           class="px-2"
           variant="ghost"
           size="sm"
-          @click="filters.splice(index, 1)"
+          @click="store.removeFilter(index)"
         >
           <XIcon class="size-4 text-red-500" />
         </Button>
@@ -180,6 +124,7 @@ defineExpose({ filters, filtersDict });
           class="flex items-center text-sm gap-2"
           variant="default"
           size="sm"
+          @click="store.addFilter()"
         >
           Add filter
         </Button>
@@ -188,7 +133,7 @@ defineExpose({ filters, filtersDict });
           class="flex items-center text-sm gap-2"
           variant="link"
           size="sm"
-          @click="filters = []"
+          @click="store.setFilters([])"
         >
           Clear filters
         </Button>

@@ -1,7 +1,7 @@
 import { defineStore } from "pinia";
 import { ref, watch } from "vue";
 import { fetchTableData, fetchTableSchema } from "./services";
-import { TableSchema } from "./types";
+import { Operator, type DataFilter, type TableSchema } from "./types";
 
 export const useSquiStore = defineStore("squi", () => {
   // REFERENCE VARIABLES
@@ -12,18 +12,21 @@ export const useSquiStore = defineStore("squi", () => {
   const offset = ref(0);
   const limit = ref(50);
 
+  const showFilters = ref(false);
+  const filters = ref<DataFilter[]>([]);
+
   // STATE VARIABLES
   const loading = ref(false);
   const error = ref<string | null>(null);
-  const openMenu = ref(true);
+  const showSidebar = ref(true);
 
   // SETTERS
   function setTable(value: string | null) {
     table.value = value;
   }
 
-  function setOpenMenu(value: boolean) {
-    openMenu.value = value;
+  function setShowSidebar(value: boolean) {
+    showSidebar.value = value;
   }
 
   // FETCHERS - this might actually not be needed here...
@@ -38,7 +41,7 @@ export const useSquiStore = defineStore("squi", () => {
     if (!table.value) return;
 
     loading.value = true;
-    fetchTableData(table.value, [], limit.value, offset.value)
+    fetchTableData(table.value, filters.value, limit.value, offset.value)
       .then((r) => {
         tableData.value = r.ok ? r.data : [];
         loading.value = false;
@@ -49,6 +52,28 @@ export const useSquiStore = defineStore("squi", () => {
       });
   }
 
+  function setShowFilters(value: boolean) {
+    showFilters.value = value;
+  }
+
+  function addFilter() {
+    if (!tableSchema.value || tableSchema.value.columns.length === 0) return;
+    const newFilter: DataFilter = {
+      column: tableSchema.value.columns[0].name,
+      operator: Operator.Equal,
+      value: "null",
+    };
+    filters.value.push(newFilter);
+  }
+
+  function removeFilter(index: number) {
+    filters.value.splice(index, 1);
+  }
+
+  function setFilters(newFilters: DataFilter[]) {
+    filters.value = newFilters;
+  }
+
   function refreshTableData() {
     getTableData();
   }
@@ -57,6 +82,9 @@ export const useSquiStore = defineStore("squi", () => {
   watch(table, (value) => {
     if (value) {
       localStorage.setItem("table", value);
+      offset.value = 0;
+      limit.value = 50;
+      setFilters([]);
       getTableSchema();
       getTableData();
     } else {
@@ -67,26 +95,40 @@ export const useSquiStore = defineStore("squi", () => {
   });
 
   // main watcher for table data
-  watch([offset, limit], () => {
-    if (!table.value) return;
-    getTableData();
-  });
+  watch(
+    [offset, limit, filters],
+    () => {
+      if (!table.value) return;
+      getTableData();
+    },
+    { deep: true }
+  );
 
   return {
     table,
     setTable,
+
     tableSchema,
     getTableSchema,
+
     tableData,
     getTableData,
 
     offset,
     limit,
-    refreshTableData,
+
+    showFilters,
+    setShowFilters,
+    filters,
+    addFilter,
+    removeFilter,
+    setFilters,
 
     loading,
     error,
-    openMenu,
-    setOpenMenu,
+
+    showSidebar,
+    setShowSidebar,
+    refreshTableData,
   };
 });

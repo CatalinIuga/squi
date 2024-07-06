@@ -7,21 +7,14 @@ import LimitOffset from "./LimitOffset.vue";
 import RefreshTrigger from "./RefreshTrigger.vue";
 import TableGrid from "./grid/TableGrid.vue";
 
-import { fetchTables } from "@/lib/services";
 import { useSquiStore } from "@/lib/store";
-import { unrwapResult } from "@/lib/utils";
 
-import { computed, onMounted } from "vue";
+import { computed } from "vue";
 import SidebarTrigger from "./SidebarTrigger.vue";
 
 const store = useSquiStore();
 
 const table = computed(() => store.table);
-
-onMounted(async () => {
-  const tables = unrwapResult(await fetchTables());
-  store.setTable(tables[0]);
-});
 </script>
 
 <template>

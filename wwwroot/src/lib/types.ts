@@ -1,4 +1,3 @@
-// TOOD: update this to include relationships
 type PossibleResults<T> =
   | {
       ok: true;
@@ -12,12 +11,12 @@ type PossibleResults<T> =
 export type Result<T> = PossibleResults<T>;
 
 export enum Operator {
-  Equal = ">",
+  Equal = "=",
   NotEqual = "!=",
   GreaterThan = ">",
   GreaterThanOrEqual = ">=",
-  LessThan = "<=",
-  LessThanOrEqual = "lte",
+  LessThan = "<",
+  LessThanOrEqual = "<=",
   Like = "LIKE",
   NotLike = "NOT LIKE",
   IsNull = "IS NULL",
@@ -27,7 +26,7 @@ export enum Operator {
 export type DataFilter = {
   column: string;
   operator: Operator;
-  value: string;
+  value?: string; // CHORE: maybe this could be infered by the type of the column?
 };
 
 export type ColumnSchema = {
