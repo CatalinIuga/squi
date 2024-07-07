@@ -9,6 +9,8 @@ export const useSquiStore = defineStore("squi", () => {
   const tableSchema = ref<TableSchema | null>(null);
   const tableData = ref<Record<string, any>[]>([]);
 
+  const filteredColumns = ref<string[]>([]);
+
   const offset = ref(0);
   const limit = ref(50);
 
@@ -32,9 +34,10 @@ export const useSquiStore = defineStore("squi", () => {
   // FETCHERS - this might actually not be needed here...
   function getTableSchema() {
     if (!table.value) return;
-    fetchTableSchema(table.value).then(
-      (r) => (tableSchema.value = r.ok ? r.data : null)
-    );
+    fetchTableSchema(table.value).then((r) => {
+      tableSchema.value = r.ok ? r.data : null;
+      filteredColumns.value = r.ok ? r.data.columns.map((c) => c.name) : [];
+    });
   }
 
   function getTableData() {
@@ -72,6 +75,24 @@ export const useSquiStore = defineStore("squi", () => {
 
   function setFilters(newFilters: DataFilter[]) {
     filters.value = newFilters;
+  }
+
+  function toggleColumn(column: string) {
+    if (filteredColumns.value.includes(column)) {
+      filteredColumns.value = filteredColumns.value.filter((c) => c !== column);
+    } else {
+      filteredColumns.value.push(column);
+    }
+    console.log(filteredColumns.value);
+  }
+
+  function toggleAllColumns() {
+    if (filteredColumns.value.length !== tableSchema.value?.columns.length) {
+      filteredColumns.value =
+        tableSchema.value?.columns.map((c) => c.name) || [];
+    } else {
+      filteredColumns.value = [];
+    }
   }
 
   function refreshTableData() {
@@ -113,6 +134,10 @@ export const useSquiStore = defineStore("squi", () => {
 
     tableData,
     getTableData,
+
+    filteredColumns,
+    toggleColumn,
+    toggleAllColumns,
 
     offset,
     limit,

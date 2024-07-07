@@ -18,6 +18,7 @@ const store = useSquiStore();
 const loading = computed(() => store.loading);
 const data = computed(() => store.tableData);
 const columns = computed(() => store.tableSchema?.columns);
+const filteredColumns = computed(() => store.filteredColumns);
 
 const columnDefs = ref<ColDef[]>([]);
 const rowData = ref<any[]>([]);
@@ -36,19 +37,23 @@ const gridOptions: GridOptions = {
 function setColDefs(): ColDef[] {
   if (!columns.value) return [];
 
-  const baseColDefs: ColDef[] = columns.value.map((col) => {
-    return {
-      headerName: col.name,
-      field: col.name,
-      sortable: true,
-      filter: false,
-      cellClass: "!flex !px-1 !py-1 ",
-      editable: true,
-      resizable: true,
-      suppressSizeToFit: true,
-      width: 200,
-    };
-  });
+  const baseColDefs: ColDef[] = columns.value
+    .filter((col) => filteredColumns.value.includes(col.name))
+    .map((col) => {
+      return {
+        headerName: col.name,
+        field: col.name,
+        sortable: true,
+        filter: false,
+        cellClass: "!flex !px-1 !py-1 ",
+        editable: true,
+        resizable: true,
+        suppressSizeToFit: true,
+        width: 200,
+      };
+    });
+
+  if (baseColDefs.length === 0) return [];
 
   baseColDefs.unshift({
     sortable: false,
@@ -80,10 +85,14 @@ onMounted(() => {
   rowData.value = setRowData();
 });
 
-watch([data, columns], () => {
-  columnDefs.value = setColDefs();
-  rowData.value = setRowData();
-});
+watch(
+  [data, filteredColumns, columns],
+  () => {
+    columnDefs.value = setColDefs();
+    rowData.value = setRowData();
+  },
+  { deep: true }
+);
 </script>
 
 <template>
