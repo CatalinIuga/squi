@@ -1,27 +1,35 @@
 <script setup lang="ts">
 import { useSquiStore } from "@/lib/store";
 import { ClientSideRowModelModule } from "@ag-grid-community/client-side-row-model";
-import { ColDef, GridOptions, ModuleRegistry } from "@ag-grid-community/core";
+import {
+  ColDef,
+  GridApi,
+  GridOptions,
+  GridReadyEvent,
+  ModuleRegistry,
+} from "@ag-grid-community/core";
 import { AgGridVue } from "@ag-grid-community/vue3";
 import { Loader2Icon } from "lucide-vue-next";
-import { computed, onMounted, ref, watch } from "vue";
+import { computed, onMounted, ref, shallowRef, watch } from "vue";
 
+import { useToast } from "@/components/ui/toast";
 import "@ag-grid-community/styles/ag-grid.css";
 import "@ag-grid-community/styles/ag-theme-quartz.css";
 import { useColorMode } from "@vueuse/core";
 
 ModuleRegistry.registerModules([ClientSideRowModelModule]);
 
+const { toast } = useToast();
 const mode = useColorMode();
 const store = useSquiStore();
 
 const loading = computed(() => store.loading);
 const data = computed(() => store.tableData);
-const columns = computed(() => store.tableSchema?.columns);
-const filteredColumns = computed(() => store.filteredColumns);
+const columns = computed(() => store.tableColumns);
 
+const gridApi = shallowRef<GridApi>();
 const columnDefs = ref<ColDef[]>([]);
-const rowData = ref<any[]>([]);
+const rowData = ref<Record<string, any>[]>([]);
 
 const gridOptions: GridOptions = {
   rowSelection: "multiple",
@@ -38,7 +46,7 @@ function setColDefs(): ColDef[] {
   if (!columns.value) return [];
 
   const baseColDefs: ColDef[] = columns.value
-    .filter((col) => filteredColumns.value.includes(col.name))
+    .filter((col) => col.selected)
     .map((col) => {
       return {
         headerName: col.name,
@@ -71,11 +79,32 @@ function setColDefs(): ColDef[] {
   return baseColDefs;
 }
 
+function onGridReady(e: GridReadyEvent) {
+  gridApi.value = e.api;
+}
+
 function setRowData(): Record<string, any>[] {
   if (!data.value) return [];
 
   return data.value;
 }
+
+function deleteSelectedRows() {
+  if (!gridApi.value) return;
+
+  const selectedNodes = gridApi.value.getSelectedRows();
+  if (selectedNodes.length === 0) {
+    toast({
+      title: "No rows selected",
+      description: "Please select rows to delete",
+      variant: "destructive",
+    });
+    return;
+  }
+  console.log(selectedNodes);
+}
+
+defineExpose({ deleteSelectedRows });
 
 onMounted(() => {
   store.getTableData();
@@ -86,7 +115,7 @@ onMounted(() => {
 });
 
 watch(
-  [data, filteredColumns, columns],
+  [data, columns, columns],
   () => {
     columnDefs.value = setColDefs();
     rowData.value = setRowData();
@@ -112,6 +141,7 @@ watch(
         'ag-theme-quartz': mode === 'light',
         'ag-theme-quartz-dark': mode === 'dark',
       }"
+      @grid-ready="onGridReady"
       :gridOptions
       :rowData
       :columnDefs

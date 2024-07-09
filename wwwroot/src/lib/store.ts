@@ -1,7 +1,12 @@
 import { defineStore } from "pinia";
 import { ref, watch } from "vue";
 import { fetchTableData, fetchTableSchema } from "./services";
-import { Operator, type DataFilter, type TableSchema } from "./types";
+import {
+  Operator,
+  TableColumn,
+  type DataFilter,
+  type TableSchema,
+} from "./types";
 
 export const useSquiStore = defineStore("squi", () => {
   // REFERENCE VARIABLES
@@ -9,7 +14,7 @@ export const useSquiStore = defineStore("squi", () => {
   const tableSchema = ref<TableSchema | null>(null);
   const tableData = ref<Record<string, any>[]>([]);
 
-  const filteredColumns = ref<string[]>([]);
+  const tableColumns = ref<TableColumn[]>([]);
 
   const offset = ref(0);
   const limit = ref(50);
@@ -36,7 +41,12 @@ export const useSquiStore = defineStore("squi", () => {
     if (!table.value) return;
     fetchTableSchema(table.value).then((r) => {
       tableSchema.value = r.ok ? r.data : null;
-      filteredColumns.value = r.ok ? r.data.columns.map((c) => c.name) : [];
+      tableColumns.value = r.ok
+        ? r.data.columns.map((c) => ({
+            ...c,
+            selected: true,
+          }))
+        : [];
     });
   }
 
@@ -63,8 +73,8 @@ export const useSquiStore = defineStore("squi", () => {
     if (!tableSchema.value || tableSchema.value.columns.length === 0) return;
     const newFilter: DataFilter = {
       column: tableSchema.value.columns[0].name,
-      operator: Operator.Equal,
-      value: "null",
+      operator: Operator.IsNotNull,
+      value: "",
     };
     filters.value.push(newFilter);
   }
@@ -77,22 +87,17 @@ export const useSquiStore = defineStore("squi", () => {
     filters.value = newFilters;
   }
 
-  function toggleColumn(column: string) {
-    if (filteredColumns.value.includes(column)) {
-      filteredColumns.value = filteredColumns.value.filter((c) => c !== column);
-    } else {
-      filteredColumns.value.push(column);
+  function toggleColumn(column: TableColumn) {
+    const col = tableColumns.value.find((c) => c.name === column.name);
+    if (col) {
+      col.selected = !col.selected;
     }
-    console.log(filteredColumns.value);
   }
 
   function toggleAllColumns() {
-    if (filteredColumns.value.length !== tableSchema.value?.columns.length) {
-      filteredColumns.value =
-        tableSchema.value?.columns.map((c) => c.name) || [];
-    } else {
-      filteredColumns.value = [];
-    }
+    if (!tableSchema.value) return;
+    const trueOrFalse = tableColumns.value.every((c) => c.selected);
+    tableColumns.value.map((c) => (c.selected = !trueOrFalse));
   }
 
   function refreshTableData() {
@@ -135,7 +140,7 @@ export const useSquiStore = defineStore("squi", () => {
     tableData,
     getTableData,
 
-    filteredColumns,
+    tableColumns,
     toggleColumn,
     toggleAllColumns,
 

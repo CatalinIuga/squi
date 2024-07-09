@@ -19,6 +19,7 @@ const filteredTables = ref<string[]>([]);
 
 onMounted(async () => {
   tables.value = unrwapResult(await fetchTables());
+  // TODO: if localstorage has table but not found in current db!
   updateFilteredTables();
 });
 

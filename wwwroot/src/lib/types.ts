@@ -40,6 +40,10 @@ export type ColumnSchema = {
   default: any;
 };
 
+export type TableColumn = ColumnSchema & {
+  selected: boolean;
+};
+
 export type TableSchema = {
   rowCount: number;
   columns: ColumnSchema[];

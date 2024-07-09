@@ -20,11 +20,11 @@ import { computed } from "vue";
 
 const store = useSquiStore();
 
-const columns = computed(
-  () => store.tableSchema?.columns.map((c) => c.name) ?? []
-);
+const columns = computed(() => store.tableColumns);
 
-const filteredColumns = computed(() => store.filteredColumns);
+const selectedCount = computed(
+  () => columns.value.filter((col) => col.selected).length
+);
 
 const filterFunction = (list: any[], term: string) =>
   list.filter((i) => i.toLowerCase()?.includes(term.toLowerCase()));
@@ -41,10 +41,10 @@ const filterFunction = (list: any[], term: string) =>
         <SlidersHorizontal :size="16" />
         Columns
         <div
-          v-if="filteredColumns.length !== columns.length"
+          v-if="selectedCount !== columns.length"
           class="absolute text-xs top-0 right-0 -mt-1 -mr-1 flex items-center justify-center w-4 h-4 bg-primary text-primary-foreground rounded-full"
         >
-          {{ filteredColumns.length }}
+          {{ selectedCount }}
         </div>
       </Button>
     </PopoverTrigger>
@@ -64,13 +64,9 @@ const filterFunction = (list: any[], term: string) =>
                 <div
                   class="mr-2 flex h-4 w-4 items-center justify-center rounded-sm"
                 >
-                  <CheckIcon
-                    :size="16"
-                    v-if="filteredColumns.includes(col)"
-                    class="size-4"
-                  />
+                  <CheckIcon :size="16" v-if="col.selected" class="size-4" />
                 </div>
-                <span class="text-pretty">{{ col }}</span>
+                <span class="text-pretty">{{ col.name }}</span>
               </CommandItem>
             </template>
           </CommandGroup>
@@ -83,9 +79,7 @@ const filterFunction = (list: any[], term: string) =>
               class="w-full font-semibold"
             >
               {{
-                filteredColumns.length < columns.length
-                  ? "Select all"
-                  : "Deselect all"
+                selectedCount < columns.length ? "Select all" : "Deselect all"
               }}
             </Button>
           </div>

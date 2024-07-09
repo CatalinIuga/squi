@@ -1,20 +1,25 @@
 <script setup lang="ts">
+import { Button } from "../ui/button";
 import ColumnsSelector from "./ColumnsSelector.vue";
-import EditingButtons from "./EditingButtons.vue";
 import FilteringSection from "./FilteringSection.vue";
 import FiltersTrigger from "./FiltersTrigger.vue";
 import LimitOffset from "./LimitOffset.vue";
 import RefreshTrigger from "./RefreshTrigger.vue";
-import TableGrid from "./grid/TableGrid.vue";
+import TableGrid from "./TableGrid.vue";
 
 import { useSquiStore } from "@/lib/store";
 
-import { computed } from "vue";
+import { computed, ref } from "vue";
 import SidebarTrigger from "./SidebarTrigger.vue";
 
 const store = useSquiStore();
-
 const table = computed(() => store.table);
+
+const gridRef = ref();
+
+function deleteRows() {
+  gridRef.value.deleteSelectedRows();
+}
 </script>
 
 <template>
@@ -23,13 +28,18 @@ const table = computed(() => store.table);
       <SidebarTrigger />
       <FiltersTrigger />
       <ColumnsSelector />
-      <EditingButtons />
+      <Button variant="default" size="sm">Insert</Button>
+      <Button class="bg-green-600 hover:bg-green-600/80" size="sm">Save</Button>
+      <Button variant="outline" size="sm">Discard</Button>
+      <Button @click="deleteRows" variant="destructive" size="sm"
+        >Delete</Button
+      >
       <LimitOffset />
       <RefreshTrigger />
     </section>
     <FilteringSection />
     <output class="relative h-full overflow-auto">
-      <TableGrid />
+      <TableGrid ref="gridRef" />
     </output>
   </article>
 </template>
