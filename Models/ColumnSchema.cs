@@ -1,38 +1,4 @@
-namespace Squi.Models;
-
-/// Available row information:
-// TABLE_CATALOG: main
-// TABLE_SCHEMA: sqlite_default_schema
-// TABLE_NAME: artists
-// COLUMN_NAME: Name
-// COLUMN_GUID:
-// COLUMN_PROPID:
-// ORDINAL_POSITION: 1
-// COLUMN_HASDEFAULT: False
-// COLUMN_DEFAULT:
-// COLUMN_FLAGS:
-// IS_NULLABLE: True
-// DATA_TYPE: nvarchar
-// TYPE_GUID:
-// CHARACTER_MAXIMUM_LENGTH: 120
-// CHARACTER_OCTET_LENGTH:
-// NUMERIC_PRECISION:
-// NUMERIC_SCALE:
-// DATETIME_PRECISION:
-// CHARACTER_SET_CATALOG:
-// CHARACTER_SET_SCHEMA:
-// CHARACTER_SET_NAME:
-// COLLATION_CATALOG:
-// COLLATION_SCHEMA:
-// COLLATION_NAME: BINARY
-// DOMAIN_CATALOG:
-// DOMAIN_NAME:
-// DESCRIPTION:
-// PRIMARY_KEY: False
-// EDM_TYPE: nvarchar
-// AUTOINCREMENT: False
-// UNIQUE: False
-
+namespace squi.Models;
 
 /// <summary>
 /// Represents a database column.
@@ -77,5 +43,5 @@ public class ColumnSchema
     /// <summary>
     /// The default value of the column.
     /// </summary>
-    public string Default { get; set; } = string.Empty;
+    public object Default { get; set; } = string.Empty;
 }

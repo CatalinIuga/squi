@@ -1,209 +1,141 @@
-using System.Data;
-using System.Data.Common;
 using System.Data.SQLite;
-using Squi.Models;
+using Dapper;
+using squi.Models;
+using squi.Utils;
 
-namespace Squi.Connectors;
+namespace squi.Connectors;
 
 /// <summary>
 /// This class is used to connect to a SQLite database.
 /// </summary>
-public class SQLiteProvider
+public class SQLiteConnector : IConnector
 {
-    /// <summary>
-    /// The connection to the database.
-    /// </summary>
-    private readonly DbConnection connection = SQLiteFactory.Instance.CreateConnection();
+    public string ConnectionString { get; init; }
 
-    /// <summary>
-    /// The tables that should not be displayed.
-    /// </summary>
     public List<string> PrivateTables { get; } =
         new List<string> { "sqlite_sequence", "sqlite_stat1", };
 
-    /// <summary>
-    /// Initializes a new instance of the <see cref="SQLiteProvider"/> class.
-    /// </summary>
-    public SQLiteProvider(string path)
+    public SQLiteConnection Connection { get; set; } = null!;
+
+    public SQLiteConnector(string connectionString)
     {
-        if (!File.Exists(path))
+        ConnectionString = $"Data Source={connectionString}";
+    }
+
+    public void Connect()
+    {
+        try
         {
-            Console.WriteLine("Database file does not exist.");
-            return;
+            Connection = new SQLiteConnection(ConnectionString);
+            Connection.Open();
         }
-        connection.ConnectionString = $"Data Source={path}";
-        connection.Open();
-    }
-
-    /// <summary>
-    /// Gets the schema of a table.
-    /// </summary>
-    /// <param name="tableName">The name of the table.</param>
-    public TableSchema GetSchema(string tableName)
-    {
-        var schema = connection.GetSchema("Columns", new[] { null, null, tableName });
-        var cmd = connection.CreateCommand();
-        cmd.CommandText = $"SELECT COUNT(*) FROM {tableName}";
-        var rowCount = cmd.ExecuteScalar();
-        return new TableSchema(schema, rowCount is null ? 0 : Convert.ToInt32(rowCount));
-    }
-
-    /// <summary>
-    /// Gets the data from a table.
-    /// </summary>
-    /// <param name="tableName">The name of the table.</param>
-    public DataTable GetData(string tableName, string[]? filters, int limit, int offset)
-    {
-        var command = connection.CreateCommand();
-        Console.WriteLine(tableName + filters + limit + offset);
-        command.CommandText =
-            $"SELECT * FROM {tableName} {(
-            filters is not null && filters.Length > 0
-                ? $"WHERE {string.Join(" AND ", filters.Select(x => $"{x}"))}"
-                : string.Empty
-            )} LIMIT {limit} OFFSET {offset}";
-        var reader = command.ExecuteReader();
-        var table = new DataTable();
-        table.Load(reader);
-
-        return table;
-    }
-
-    /// <summary>
-    /// Gets the names of the tables in the database.
-    /// </summary>
-    public string[] GetTables()
-    {
-        if (connection is null)
+        catch (Exception e)
         {
-            throw new Exception("Connection is null");
+            Logger.Error(e.Message);
+            Environment.Exit(1);
         }
-
-        var schema = connection.GetSchema("Tables");
-
-        return schema
-            .Rows
-            .Cast<DataRow>()
-            .Select(x => x["TABLE_NAME"].ToString() ?? string.Empty)
-            .Where(x => !PrivateTables.Contains(x))
-            .ToArray();
     }
 
-    public IDictionary<string, object?> InsertData(
+    public void Disconnect()
+    {
+        Connection.Close();
+    }
+
+    public Task<IEnumerable<string>> GetTableNames()
+    {
+        var sql = PrivateTables.Aggregate(
+            "SELECT name FROM sqlite_master WHERE type='table' AND name NOT IN (",
+            (current, table) => current + $"'{table}', "
+        );
+        sql = sql.Remove(sql.Length - 2) + ")";
+        var tables = Connection.QueryAsync<string>(sql);
+        return tables;
+    }
+
+    public Task<TableSchema> GetTableSchema(string tableName)
+    {
+        var columns = Connection.GetSchemaAsync("Columns", new[] { null, null, tableName, null });
+        var count = Connection.QuerySingleAsync<int>($"SELECT COUNT(*) FROM {tableName}");
+        return Task.FromResult(new TableSchema(columns.Result, count.Result));
+    }
+
+    public Task<Result> SelectData(
         string tableName,
-        IDictionary<string, object?> data
+        IEnumerable<DataFilters> filters,
+        int limit = 50,
+        int offset = 0
     )
     {
-        var dt = connection.GetSchema("Columns", new[] { null, null, tableName });
-        var columns = dt.Rows
-            .Cast<DataRow>()
-            .Where(x => x["AUTOINCREMENT"].ToString()! == "False")
-            .Select(x => x["COLUMN_NAME"].ToString())
-            .ToArray();
-
-        var command = connection.CreateCommand();
-        command.CommandText =
-            $"INSERT INTO {tableName} ({string.Join(", ", columns)}) VALUES ({string.Join(", ", columns.Select(x => $"@{x}"))}) RETURNING *";
-        foreach (var column in columns)
+        var sql = SqlHelpers.GenerateSelect(tableName, filters, limit, offset);
+        try
         {
-            if (column is not null)
-                command.Parameters.Add(new SQLiteParameter($"@{column}", data[column]));
+            var data = Connection.QueryAsync(sql);
+            var result = data.Result.Select(row => new TableData(row));
+            return Task.FromResult(new Result { Ok = true, Data = result });
         }
-
-        var reader = command.ExecuteReader();
-        var table = new DataTable();
-        table.Load(reader);
-
-        var row =
-            table
-                .Rows
-                .Cast<DataRow>()
-                .First()
-                .Table
-                .Columns
-                .Cast<DataColumn>()
-                .ToDictionary(
-                    col => col.ColumnName,
-                    col => table.Rows[0][col] is DBNull ? null : table.Rows[0][col]
-                ) ?? throw new Exception("Could not insert data.");
-        return row;
+        catch (Exception e)
+        {
+            Logger.Error(e.Message);
+            return Task.FromResult(new Result { Ok = false, Err = e.Message });
+        }
     }
 
-    public IDictionary<string, object?> UpdateData(
-        string tableName,
-        IDictionary<string, object?> data
-    )
+    public Task<Result> InsertData(string tableName, TableData data)
     {
-        var dt = connection.GetSchema("Columns", new[] { null, null, tableName });
-        var columns = dt.Rows.Cast<DataRow>().Select(x => x["COLUMN_NAME"].ToString()).ToArray();
-
-        var command = connection.CreateCommand();
-
-        command.CommandText = command.CommandText =
-            $"UPDATE {tableName} SET {string.Join(", ", columns.Select(x => $"{x} = @{x}"))} WHERE {string.Join(" AND ", columns.Select(x => $"{x} IS @__initial_{x}"))} RETURNING *";
-        ;
-
-        foreach (var column in columns)
+        var sql = SqlHelpers.GenerateInsert(tableName, data);
+        try
         {
-            if (column is not null)
+            Connection.Execute(sql);
+            return CheckChanges() switch
             {
-                command.Parameters.Add(new SQLiteParameter($"@{column}", data[column]));
-                command
-                    .Parameters
-                    .Add(
-                        new SQLiteParameter(
-                            $"@__initial_{column}",
-                            data[$"__initial_{column}"] is null
-                                ? DBNull.Value
-                                : data[$"__initial_{column}"]
-                        )
-                    );
-            }
+                true => Task.FromResult(new Result { Ok = true }),
+                false => Task.FromResult(new Result { Ok = false, Err = "No rows were inserted" }),
+            };
         }
-
-        var reader = command.ExecuteReader();
-        var table = new DataTable();
-        table.Load(reader);
-
-        var row =
-            table
-                .Rows
-                .Cast<DataRow>()
-                .First()
-                .Table
-                .Columns
-                .Cast<DataColumn>()
-                .ToDictionary(
-                    col => col.ColumnName,
-                    col => table.Rows[0][col] is DBNull ? null : table.Rows[0][col]
-                ) ?? throw new Exception("Could not update data.");
-
-        return row;
-    }
-
-    public void DeleteData(string tableName, IDictionary<string, object?> data)
-    {
-        var dt = connection.GetSchema("Columns", new[] { null, null, tableName });
-        var columns = dt.Rows.Cast<DataRow>().Select(x => x["COLUMN_NAME"].ToString()).ToArray();
-
-        var command = connection.CreateCommand();
-        command.CommandText =
-            $"DELETE FROM {tableName} WHERE {string.Join(" AND ", columns.Select(x => $"{x} {(data[x!] is null ? "IS NULL" : $"= @{x}")}"))}";
-
-        foreach (var column in columns)
+        catch (Exception e)
         {
-            if (column is not null)
-                command.Parameters.Add(new SQLiteParameter($"@{column}", data[column]));
+            return Task.FromResult(new Result { Ok = false, Err = e.Message });
         }
-        if (command.ExecuteNonQuery() == 0)
-            throw new Exception("Could not delete data.");
     }
 
-    /// <summary>
-    /// Close the connection to the database.
-    /// </summary>
-    public void Close()
+    public Task<Result> UpdateData(string tableName, TableData oldValues, TableData newValues)
     {
-        connection.Close();
+        var sql = SqlHelpers.GenerateUpdate(tableName, oldValues, newValues);
+        try
+        {
+            Connection.Execute(sql);
+            return CheckChanges() switch
+            {
+                true => Task.FromResult(new Result { Ok = true }),
+                false => Task.FromResult(new Result { Ok = false, Err = "No rows were updated" }),
+            };
+        }
+        catch (Exception e)
+        {
+            return Task.FromResult(new Result { Ok = false, Err = e.Message });
+        }
+    }
+
+    public Task<Result> DeleteData(string tableName, TableData data)
+    {
+        var sql = SqlHelpers.GenerateDelete(tableName, data);
+        try
+        {
+            Connection.Execute(sql);
+            return CheckChanges() switch
+            {
+                true => Task.FromResult(new Result { Ok = true }),
+                false => Task.FromResult(new Result { Ok = false, Err = "No rows were deleted" }),
+            };
+        }
+        catch (Exception e)
+        {
+            return Task.FromResult(new Result { Ok = false, Err = e.Message });
+        }
+    }
+
+    public bool CheckChanges()
+    {
+        return Connection.QuerySingle<int>($"SELECT changes()") > 0;
     }
 }
